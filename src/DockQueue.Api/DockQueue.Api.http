@@ -1,0 +1,6 @@
+@DockQueue.Api_HostAddress = http://localhost:5203
+
+GET {{DockQueue.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
