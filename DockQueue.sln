@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Api", "src\DockQueue.Api\DockQueue.Api.csproj", "{70D5B54B-B453-4E28-A915-98D7DA59BC70}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Controller", "src\DockQueue.Api\DockQueue.Controller.csproj", "{70D5B54B-B453-4E28-A915-98D7DA59BC70}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Application", "src\DockQueue.Application\DockQueue.Application.csproj", "{98308FE3-A2E0-4C53-A736-2C884DDCA2CD}"
 EndProject
@@ -80,5 +80,8 @@ Global
 		{98308FE3-A2E0-4C53-A736-2C884DDCA2CD} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{BAB56A57-3D76-4016-AE79-BE13D3F8E225} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{91229D10-95F9-4E24-AE8B-B79C1D74691F} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {86414F07-675B-4F94-B446-407685AFA9D1}
 	EndGlobalSection
 EndGlobal

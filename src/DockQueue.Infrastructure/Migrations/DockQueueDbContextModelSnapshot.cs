@@ -66,7 +66,7 @@ namespace DockQueue.Infrastructure.Migrations
                     b.HasIndex("Number")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("users", (string)null);
                 });
 #pragma warning restore 612, 618
         }

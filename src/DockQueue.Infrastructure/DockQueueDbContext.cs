@@ -13,6 +13,7 @@ namespace DockQueue.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>().ToTable("users");
             base.OnModelCreating(modelBuilder);
             
             var userEntity = modelBuilder.Entity <User> ();
