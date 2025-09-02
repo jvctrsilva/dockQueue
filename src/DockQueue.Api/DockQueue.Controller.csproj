@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\DockQueue.Infra.Ioc\DockQueue.Infra.Ioc.csproj" />
     <ProjectReference Include="..\DockQueue.Application\DockQueue.Application.csproj" />
   </ItemGroup>
 
