@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using DockQueue.Domain.Entities;
+﻿using DockQueue.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DockQueue.Infra.Data.EntitiesConfiguration
