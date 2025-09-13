@@ -41,5 +41,18 @@ namespace DockQueue.Application.Services
             var createdUser = await _userRepository.AddAsync(user);
             return new UserDto(createdUser);
         }
+        public async Task<UserDto?> AuthenticateAsync(LoginUserDto loginUserDto)
+        {
+            // Encontrar o usuário pelo email
+            var user = await _userRepository.GetByEmailAsync(loginUserDto.Email);
+            if (user == null) return null;
+
+            // Verificar a senha
+            var validPassword = PasswordHasher.Verify(loginUserDto.Password, user.Password);
+            if (!validPassword) return null;
+
+            return new UserDto(user);
+
+        }
     }
 }
