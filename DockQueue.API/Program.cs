@@ -1,48 +1,95 @@
 using DockQueue.Infra.Ioc;
 using Microsoft.OpenApi.Models;
 using DockQueue.Domain.Validation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Configuração do CORS para permitir requisições do React
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactDev",
-        policy => policy.WithOrigins("http://localhost:3000")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
-});
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowReactApp",
+//        policy => policy.WithOrigins("http://localhost:3000")
+//                        .AllowAnyHeader()
+//                        .AllowAnyMethod());
+//});
 
-// Configuração de serviços
+// Infraestrutura (IoC)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Controllers
 builder.Services.AddControllers();
 
-// Swagger
+
+// JWT
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = true; // false apenas em dev
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
+        ClockSkew = TimeSpan.FromSeconds(30)
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Swagger com suporte a Bearer
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Title = "DockQueue.API",
-        Version = "v1"
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Digite 'Bearer {seu_token}'"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
     });
 });
 
-// Infraestrutura (seu método de IoC)
-builder.Services.AddInfrastructure(builder.Configuration);
-
-// Endpoints API Explorer (para Swagger/OpenAPI)
+// Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Pipeline HTTP
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// Middleware de tratamento global de exceções
 app.UseExceptionHandler(appBuilder =>
 {
     appBuilder.Run(async context =>
@@ -56,27 +103,18 @@ app.UseExceptionHandler(appBuilder =>
             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = exception.Message }));
         }
     });
-    /*     else if (exception is UnauthorizedException)
-         {
-             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = exception.Message }));
-         }
-         else if (exception is NotFoundException)
-         {
-             context.Response.StatusCode = StatusCodes.Status404NotFound;
-             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = exception.Message }));
-         }
-         else
-         {
-             context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = "Erro interno do servidor" }));
-         }
-     });*/
 });
 
-app.UseCors("AllowReactApp");
+// Ativar CORS
+//app.UseCors("AllowReactApp");
+
 app.UseHttpsRedirection();
+
+// Autenticação e autorização
+app.UseAuthentication(); // <--- importante: vem antes de UseAuthorization
 app.UseAuthorization();
+
+// Mapear controllers
 app.MapControllers();
 
 app.Run();
