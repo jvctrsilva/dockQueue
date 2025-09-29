@@ -1,6 +1,7 @@
 ﻿using DockQueue.Application.Services;
 using DockQueue.Infra.Data.Context;
 using DockQueue.Infra.Data.Repositories;
+using DockQueue.Infra.Data.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +23,13 @@ namespace DockQueue.Infra.Ioc
 
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IBoxRepository, BoxRepository>();
 
             // Services
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IBoxService, BoxService>();
+            services.AddScoped<JwtTokenGenerator>();
+            services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
 
             return services;
         }

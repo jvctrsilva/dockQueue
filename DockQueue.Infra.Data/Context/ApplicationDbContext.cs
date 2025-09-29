@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
+
 namespace DockQueue.Infra.Data.Context
 {
     public class ApplicationDbContext : DbContext
@@ -10,6 +11,7 @@ namespace DockQueue.Infra.Data.Context
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Box> Boxes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
