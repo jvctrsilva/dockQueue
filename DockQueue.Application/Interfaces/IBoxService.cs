@@ -1,3 +1,4 @@
+
 using DockQueue.Application.DTOs;
 
 namespace DockQueue.Application.Interfaces

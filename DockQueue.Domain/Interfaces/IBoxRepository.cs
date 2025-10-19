@@ -1,4 +1,4 @@
-using DockQueue.Domain.Entities;
+﻿using DockQueue.Domain.Entities;
 
 namespace DockQueue.Domain.Interfaces
 {

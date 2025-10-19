@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using DockQueue.Infra.Ioc;
 using Microsoft.OpenApi.Models;
 using DockQueue.Domain.Validation;
@@ -7,83 +8,90 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração do CORS para permitir requisições do React
-//builder.Services.AddCors(options =>
-//{
-//    options.AddPolicy("AllowReactApp",
-//        policy => policy.WithOrigins("http://localhost:3000")
-//                        .AllowAnyHeader()
-//                        .AllowAnyMethod());
-//});
-
-// Infraestrutura (IoC)
+// -----------------------
+// IoC
+// -----------------------
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// -----------------------
 // Controllers
+// -----------------------
 builder.Services.AddControllers();
 
-
-// JWT
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-builder.Services.AddAuthentication(options =>
+// -----------------------
+// CORS (Blazor / Frontend)
+// Configure no appsettings: "Cors:AllowedOrigins": ["https://localhost:5173", ...]
+// -----------------------
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = true; // false apenas em dev
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
+    options.AddPolicy("Frontend", policy =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"])),
-        ClockSkew = TimeSpan.FromSeconds(30)
-    };
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        else
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+    });
 });
+
+// -----------------------
+// JWT Auth
+// Usa AccessTokenMinutes / RefreshTokenDays do appsettings
+// -----------------------
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var keyBytes = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key nÃ£o configurada"));
+var signingKey = new SymmetricSecurityKey(keyBytes);
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        // Em DEV vocÃª pode desligar para testes em http
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero, // tokens expiram exatamente no horÃ¡rio
+            // (opcional) mapeia role/email se quiser depender desses nomes
+            RoleClaimType = ClaimTypes.Role,
+            NameClaimType = ClaimTypes.Email
+        };
+    });
 
 builder.Services.AddAuthorization();
 
-// Swagger com suporte a Bearer
-builder.Services.AddSwaggerGen(c =>
-{
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Digite 'Bearer {seu_token}'"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
-
-// Swagger/OpenAPI
+// -----------------------
+// Swagger centralizado no IoC
+// -----------------------
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddInfrastructureSwagger();
+
 
 var app = builder.Build();
 
+// -----------------------
 // Pipeline
+// -----------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -105,16 +113,18 @@ app.UseExceptionHandler(appBuilder =>
     });
 });
 
-// Ativar CORS
-//app.UseCors("AllowReactApp");
+// Se for Blazor Server dentro do mesmo projeto, vocÃª pode precisar de:
+// app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 
-// Autenticação e autorização
-app.UseAuthentication(); // <--- importante: vem antes de UseAuthorization
+// CORS antes de auth/authorization
+app.UseCors("Frontend");
+
+// Auth
+app.UseAuthentication();
 app.UseAuthorization();
 
-// Mapear controllers
 app.MapControllers();
 
 app.Run();

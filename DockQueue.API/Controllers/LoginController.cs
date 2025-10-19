@@ -1,5 +1,5 @@
-using Microsoft.AspNetCore.Mvc;    
-using DockQueue.Application.Interfaces; 
+using Microsoft.AspNetCore.Mvc;
+using DockQueue.Application.Interfaces;
 using DockQueue.Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 
@@ -13,28 +13,29 @@ namespace DockQueue.API.Controllers
         private readonly IUserService _userService;
         private readonly ITokenGenerator _tokenGenerator;
 
-
-        public LoginController(IUserService userService, ITokenGenerator jwtTokenGenerator)
+        public LoginController(IUserService userService, ITokenGenerator tokenGenerator)
         {
             _userService = userService;
-            _tokenGenerator = jwtTokenGenerator;
+            _tokenGenerator = tokenGenerator;
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginUserDto loginUserDto)
+        public async Task<IActionResult> Login([FromBody] LoginUserDto loginUserDto)
         {
             var user = await _userService.AuthenticateAsync(loginUserDto);
-
             if (user == null)
-                return Unauthorized("Email ou senha inv·lidos");
+                return Unauthorized("Email ou senha inv√°lidos");
 
-            //gera token JWT
-            var token = _tokenGenerator.GenerateToken(user.Id.ToString(), user.Email, user.Role);
+            var accessToken = _tokenGenerator.GenerateAccessToken(user.Id.ToString(), user.Email, user.Role);
+            var (refreshToken, expiry) = _tokenGenerator.GenerateRefreshToken();
 
-            return Ok(new
+            await _userService.UpdateRefreshTokenAsync(user.Id, refreshToken, expiry);
+
+            return Ok(new AuthResponseDto
             {
-                token,
-                user
+                Token = accessToken,
+                RefreshToken = refreshToken,
+                User = user
             });
         }
     }

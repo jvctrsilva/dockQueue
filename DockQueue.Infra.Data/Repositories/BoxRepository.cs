@@ -1,53 +1,47 @@
 using DockQueue.Domain.Entities;
 using DockQueue.Domain.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using DockQueue.Infra.Data.Context;
 using DockQueue.Domain.Validation;
-
+using DockQueue.Infra.Data.Context;
+using Microsoft.EntityFrameworkCore;
 
 namespace DockQueue.Infra.Data.Repositories
 {
     public class BoxRepository : IBoxRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ApplicationDbContext _ctx;
+        public BoxRepository(ApplicationDbContext ctx) => _ctx = ctx;
 
-        public BoxRepository(ApplicationDbContext context) { _context = context; }
+        public async Task<List<Box>> GetAllAsync() =>
+            await _ctx.Boxes.AsNoTracking().ToListAsync();
 
-        public async Task<List<Box>> GetAllAsync()
-        {
-            return await _context.Boxes
-                                 .Include(b => b.Driver) // carrega motorista junto
-                                 .ToListAsync();
-        }
-
-        public async Task<Box?> GetByIdAsync(int id)
-        {
-            return await _context.Boxes
-                                 .Include(b => b.Driver)
-                                 .FirstOrDefaultAsync(b => b.Id == id);
-        }
+        public async Task<Box?> GetByIdAsync(int id) =>
+            await _ctx.Boxes.FindAsync(id);
 
         public async Task<Box> AddAsync(Box box)
         {
-            _context.Boxes.Add(box);
-            await _context.SaveChangesAsync();
+            _ctx.Boxes.Add(box);
+            await _ctx.SaveChangesAsync();
             return box;
         }
 
         public async Task UpdateAsync(Box box)
         {
-            _context.Boxes.Update(box);
-            await _context.SaveChangesAsync();
+            var exists = await _ctx.Boxes.AnyAsync(b => b.Id == box.Id);
+            if (!exists)
+                throw new DomainExceptionValidation.EntityNotFoundException($"Box {box.Id} n�o encontrado");
+
+            _ctx.Boxes.Update(box);
+            await _ctx.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(int id)
         {
-            var box = await GetByIdAsync(id);
-            if (box != null)
-            {
-                _context.Boxes.Remove(box);
-                await _context.SaveChangesAsync();
-            }
+            var entity = await _ctx.Boxes.FindAsync(id);
+            if (entity is null)
+                throw new DomainExceptionValidation.EntityNotFoundException($"Box {id} n�o encontrado");
+
+            _ctx.Boxes.Remove(entity);
+            await _ctx.SaveChangesAsync();
         }
     }
 }

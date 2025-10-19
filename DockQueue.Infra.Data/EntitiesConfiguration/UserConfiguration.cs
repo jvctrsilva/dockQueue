@@ -18,6 +18,8 @@ namespace DockQueue.Infra.Data.EntitiesConfiguration
             builder.Property(u => u.Password).HasMaxLength(255).IsRequired();
             builder.Property(u => u.Role).HasMaxLength(20).IsRequired();
             builder.Property(u => u.CreatedAt).IsRequired();
+            builder.Property(u => u.RefreshToken).HasMaxLength(255);
+            builder.Property(u => u.RefreshTokenExpiryTime);
         }
     }
 }

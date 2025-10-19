@@ -9,20 +9,22 @@ namespace DockQueue.Infra.Ioc
         {
             services.AddSwaggerGen(c =>
             {
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
                     Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer",
                     BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Enter 'Bearer' [space] and then your valid token in the text input below.\r\n\r\nExample: \""
+                    Description = "Digite: Bearer {seu_token}"
                 });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
-                        new OpenApiSecurityScheme()
+                        new OpenApiSecurityScheme
                         {
-                            Reference = new OpenApiReference()
+                            Reference = new OpenApiReference
                             {
                                 Type = ReferenceType.SecurityScheme,
                                 Id = "Bearer"
@@ -32,6 +34,7 @@ namespace DockQueue.Infra.Ioc
                     },
                 });
             });
+
             return services;
         }
     }

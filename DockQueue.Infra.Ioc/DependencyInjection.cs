@@ -28,7 +28,10 @@ namespace DockQueue.Infra.Ioc
             // Services
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IBoxService, BoxService>();
-            services.AddScoped<JwtTokenGenerator>();
+
+            // Auth / Tokens
+            // Remover o AddScoped<JwtTokenGenerator>();
+            // Registrar apenas como ITokenGenerator com lifetime único
             services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
 
             return services;
