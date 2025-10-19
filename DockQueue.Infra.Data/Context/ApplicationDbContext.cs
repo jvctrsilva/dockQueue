@@ -13,6 +13,8 @@ namespace DockQueue.Infra.Data.Context
         public DbSet<User> Users { get; set; }
         public DbSet<Box> Boxes { get; set; }
         public DbSet<Status> Statuses { get; set; }
+        public DbSet<SystemSettings> SystemSettings { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
