@@ -24,10 +24,12 @@ namespace DockQueue.Infra.Ioc
             // Repositories
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IBoxRepository, BoxRepository>();
+            services.AddScoped<IStatusRepository, StatusRepository>();
 
             // Services
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IBoxService, BoxService>();
+            services.AddScoped<IStatusService, StatusService>();
 
             // Auth / Tokens
             // Remover o AddScoped<JwtTokenGenerator>();
