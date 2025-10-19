@@ -24,7 +24,7 @@ namespace DockQueue.API.Controllers
         {
             var user = await _userService.AuthenticateAsync(loginUserDto);
             if (user == null)
-                return Unauthorized("Email ou senha inv·lidos");
+                return Unauthorized("Email ou senha inv√°lidos");
 
             var accessToken = _tokenGenerator.GenerateAccessToken(user.Id.ToString(), user.Email, user.Role);
             var (refreshToken, expiry) = _tokenGenerator.GenerateRefreshToken();

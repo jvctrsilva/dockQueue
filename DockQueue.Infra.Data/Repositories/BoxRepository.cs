@@ -28,7 +28,7 @@ namespace DockQueue.Infra.Data.Repositories
         {
             var exists = await _ctx.Boxes.AnyAsync(b => b.Id == box.Id);
             if (!exists)
-                throw new DomainExceptionValidation.EntityNotFoundException($"Box {box.Id} não encontrado");
+                throw new DomainExceptionValidation.EntityNotFoundException($"Box {box.Id} nï¿½o encontrado");
 
             _ctx.Boxes.Update(box);
             await _ctx.SaveChangesAsync();
@@ -38,7 +38,7 @@ namespace DockQueue.Infra.Data.Repositories
         {
             var entity = await _ctx.Boxes.FindAsync(id);
             if (entity is null)
-                throw new DomainExceptionValidation.EntityNotFoundException($"Box {id} não encontrado");
+                throw new DomainExceptionValidation.EntityNotFoundException($"Box {id} nï¿½o encontrado");
 
             _ctx.Boxes.Remove(entity);
             await _ctx.SaveChangesAsync();
