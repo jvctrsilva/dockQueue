@@ -44,7 +44,7 @@ builder.Services.AddCors(options =>
 // Usa AccessTokenMinutes / RefreshTokenDays do appsettings
 // -----------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var keyBytes = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key não configurada"));
+var keyBytes = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key nÃ£o configurada"));
 var signingKey = new SymmetricSecurityKey(keyBytes);
 
 builder.Services
@@ -55,7 +55,7 @@ builder.Services
     })
     .AddJwtBearer(options =>
     {
-        // Em DEV você pode desligar para testes em http
+        // Em DEV vocÃª pode desligar para testes em http
         options.RequireHttpsMetadata = true;
         options.SaveToken = true;
 
@@ -71,7 +71,7 @@ builder.Services
             IssuerSigningKey = signingKey,
 
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero, // tokens expiram exatamente no horário
+            ClockSkew = TimeSpan.Zero, // tokens expiram exatamente no horÃ¡rio
             // (opcional) mapeia role/email se quiser depender desses nomes
             RoleClaimType = ClaimTypes.Role,
             NameClaimType = ClaimTypes.Email
@@ -113,7 +113,7 @@ app.UseExceptionHandler(appBuilder =>
     });
 });
 
-// Se for Blazor Server dentro do mesmo projeto, você pode precisar de:
+// Se for Blazor Server dentro do mesmo projeto, vocÃª pode precisar de:
 // app.UseStaticFiles();
 
 app.UseHttpsRedirection();
