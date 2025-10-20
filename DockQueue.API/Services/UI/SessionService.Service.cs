@@ -92,7 +92,7 @@ public class SessionService
 
     public async Task<AppState?> GetInitalAppStateFromSession()
     {
-        await Task.Yield(); // Para satisfazer o requisito do método assíncrono
+        await Task.Yield(); // Para satisfazer o requisito do mÃ©todo assÃ­ncrono
 
         try
         {
@@ -100,7 +100,7 @@ public class SessionService
             if (httpContext == null || httpContext.Session == null)
             {
                 // Log para debug
-                Console.WriteLine("HttpContext ou Session é null");
+                Console.WriteLine("HttpContext ou Session Ã© null");
                 return null;
             }
 
@@ -124,6 +124,11 @@ public class SessionService
         {
             return null;
         }
+    }
+
+    public HttpContext? GetHttpContext()
+    {
+        return _httpContextAccessor.HttpContext;
     }
 
 

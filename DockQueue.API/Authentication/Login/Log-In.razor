@@ -3,6 +3,8 @@
 @layout CustomLayout
 @inject SweetAlertService Swal
 @inject NavigationManager _nav
+@inject LoginViewModel LoginViewModel
+@inject AuthService AuthService
 
 <PageTitle>Login</PageTitle>
 
@@ -15,22 +17,39 @@
                 <p class="login-subtitle">Acesse sua conta</p>
             </div>
 
-            <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+            @if (LoginViewModel.HasError)
+            {
+                <div class="alert alert-danger" role="alert">
+                    @LoginViewModel.ErrorMessage
+                </div>
+            }
+
+            <EditForm Model="LoginViewModel" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
 
                 <div class="login-field">
-                    <label for="username">Usuário</label>
-                    <InputText id="username" class="login-input" @bind-Value="model.UserName" />
-                    <ValidationMessage For="() => model.UserName" />
+                    <label for="email">Email</label>
+                    <InputText id="email" class="login-input" @bind-Value="LoginViewModel.Email" />
+                    <ValidationMessage For="() => LoginViewModel.Email" />
                 </div>
 
                 <div class="login-field">
                     <label for="password">Senha</label>
-                    <InputText id="password" type="password" class="login-input" @bind-Value="model.Password" />
-                    <ValidationMessage For="() => model.Password" />
+                    <InputText id="password" type="password" class="login-input" @bind-Value="LoginViewModel.Password" />
+                    <ValidationMessage For="() => LoginViewModel.Password" />
                 </div>
 
-                <button type="submit" class="login-button w-100">Entrar</button>
+                <button type="submit" class="login-button w-100" disabled="@LoginViewModel.IsLoading">
+                    @if (LoginViewModel.IsLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Entrando...</span>
+                    }
+                    else
+                    {
+                        <span>Entrar</span>
+                    }
+                </button>
 
                 <div class="login-extra">
                     <a href="#" @onclick="ForgotPassword">Esqueceu a senha?</a>
@@ -44,36 +63,47 @@
 
 @code
 {
-    private LoginModel model = new();
-
-    private class LoginModel
+    protected override async Task OnInitializedAsync()
     {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
-        public string UserName { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
-        public string Password { get; set; } = string.Empty;
+        var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            _nav.NavigateTo("/home");
+        }
     }
 
     private async Task HandleValidSubmit()
     {
-        // Coloque sua lógica de autenticação aqui
-        _nav.NavigateTo("/home");
-        await Task.CompletedTask;
-    }
-
-    private async Task ShowAlert(string message)
-    {
-        await SWA.Aviso(Swal, message);
-    }
-
-    private async Task ShowError(string message)
-    {
-        await SWA.Erro(Swal, message);
+        LoginViewModel.IsLoading = true;
+        LoginViewModel.ClearError();
+        
+        try
+        {
+            var success = await AuthService.LoginAsync(LoginViewModel);
+            
+            if (success)
+            {
+                await SWA.Sucesso(Swal, "Login realizado com sucesso!");
+                _nav.NavigateTo("/home");
+            }
+            else
+            {
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            LoginViewModel.SetError($"Erro inesperado: {ex.Message}");
+            StateHasChanged();
+        }
+        finally
+        {
+            LoginViewModel.IsLoading = false;
+        }
     }
 
     private async Task ForgotPassword()
     {
-        //await ShowAlert("Recuperação de senha em breve.");
+        await SWA.Aviso(Swal, "Recuperação de senha em breve.");
     }
 }
