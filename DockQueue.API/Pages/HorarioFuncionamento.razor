@@ -1,0 +1,113 @@
+@page "/horario-funcionamento"
+@inject WorkingHoursService WorkingHoursService
+@inject SweetAlertService Swal
+@using DockQueue.Services.UI
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components
+
+<div class="container-fluid mt-3">
+    <div class="card custom-card">
+        <div class="card-header">
+            <div class="card-title">Configuração de Funcionamento</div>
+        </div>
+        <div class="card-body">
+            <form onsubmit="return false;">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Dia</th>
+                                <th>Aberto</th>
+                                <th>Início</th>
+                                <th>Fim</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in workingHours.Days)
+                            {
+                                <tr>
+                                    <td>@DayToPtBr(day.Day)</td>
+                                    <td>
+                                        <input type="checkbox" checked="@day.Open" @onchange="(ChangeEventArgs e) => { day.Open = (bool)e.Value!; StateHasChanged(); }" />
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control" value="@FormatTime(day.StartTime)" @onchange="(ChangeEventArgs e) => OnTimeChanged(day, true, e.Value?.ToString())" disabled="@(!day.Open)" />
+                                    </td>
+                                    <td>
+                                        <input type="time" class="form-control" value="@FormatTime(day.EndTime)" @onchange="(ChangeEventArgs e) => OnTimeChanged(day, false, e.Value?.ToString())" disabled="@(!day.Open)" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3 d-flex justify-content-end">
+                    <button type="button" class="btn btn-primary" @onclick="HandleSave">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private WeeklyWorkingHours workingHours = new WeeklyWorkingHours();
+
+    protected override async Task OnInitializedAsync()
+    {
+        workingHours = await WorkingHoursService.GetAsync();
+        // Ordena começando na segunda-feira
+        workingHours.Days = workingHours.Days
+            .OrderBy(d => ((int)d.Day + 6) % 7)
+            .ToList();
+    }
+
+    private async Task HandleSave()
+    {
+        foreach (var d in workingHours.Days.Where(x => x.Open))
+        {
+            if (d.StartTime == null || d.EndTime == null || d.StartTime >= d.EndTime)
+            {
+                await Swal.FireAsync("Atenção", $"Verifique os horários do dia {DayToPtBr(d.Day)}.", "warning");
+                return;
+            }
+        }
+
+        await WorkingHoursService.SaveAsync(workingHours);
+        await Swal.FireAsync("Sucesso", "Horários salvos com sucesso.", "success");
+    }
+
+    private string FormatTime(TimeSpan? time)
+    {
+        return time.HasValue ? new DateTime(time.Value.Ticks).ToString("HH:mm") : string.Empty;
+    }
+
+    private void OnTimeChanged(DayWorkingHours day, bool isStart, string? value)
+    {
+        if (TimeSpan.TryParse(value, out var parsed))
+        {
+            if (isStart)
+            {
+                day.StartTime = parsed;
+            }
+            else
+            {
+                day.EndTime = parsed;
+            }
+        }
+    }
+
+    private static string DayToPtBr(DayOfWeek day)
+    {
+        return day switch
+        {
+            DayOfWeek.Sunday => "Domingo",
+            DayOfWeek.Monday => "Segunda-feira",
+            DayOfWeek.Tuesday => "Terça-feira",
+            DayOfWeek.Wednesday => "Quarta-feira",
+            DayOfWeek.Thursday => "Quinta-feira",
+            DayOfWeek.Friday => "Sexta-feira",
+            DayOfWeek.Saturday => "Sábado",
+            _ => day.ToString()
+        };
+    }
+}

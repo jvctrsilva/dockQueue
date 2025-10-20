@@ -1,0 +1,49 @@
+﻿@inherits LayoutComponentBase
+@inject IJSRuntime JSRuntime
+@inject NavigationManager _navManager
+
+
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <ErrorContent Context="Exception">
+
+        <CustomErrorBoundary OnHandle="@(async () => await Reload())" Error="Exception" />
+
+    </ErrorContent>
+</ErrorBoundary>
+
+@code
+{
+    bool ShowButton         { get; set; } = false;
+    private ErrorBoundary? _errorBoundary;
+
+    private async Task Reload()
+    {
+        await Task.Yield();
+        _errorBoundary?.Recover();
+        _navManager.NavigateTo("/home", true);
+    }
+
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("interop.updateScrollVisibility", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public void UpdateScrollVisibility(int scrollHeight)
+    {
+        ShowButton = scrollHeight >= 100;
+        StateHasChanged();
+    }
+    async Task ScrollToTop()
+    {
+        await JSRuntime.InvokeVoidAsync("interop.scrollToTop");
+    }
+}

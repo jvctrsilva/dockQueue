@@ -1,0 +1,17 @@
+﻿@inject NavigationManager Navigation
+
+<p role="alert">Não existe nada nesse endereço.</p>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Navigation.NavigateTo("/home", forceLoad: true);
+        }
+        catch (Exception e)
+        {
+            //Console.WriteLine(e);
+        }
+    }
+}

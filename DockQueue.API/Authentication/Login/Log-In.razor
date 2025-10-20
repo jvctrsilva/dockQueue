@@ -1,0 +1,79 @@
+@page "/"
+
+@layout CustomLayout
+@inject SweetAlertService Swal
+@inject NavigationManager _nav
+
+<PageTitle>Login</PageTitle>
+
+<section class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="login-logo">DQ</div>
+                <h1 class="login-title">DockQueue</h1>
+                <p class="login-subtitle">Acesse sua conta</p>
+            </div>
+
+            <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="login-field">
+                    <label for="username">Usuário</label>
+                    <InputText id="username" class="login-input" @bind-Value="model.UserName" />
+                    <ValidationMessage For="() => model.UserName" />
+                </div>
+
+                <div class="login-field">
+                    <label for="password">Senha</label>
+                    <InputText id="password" type="password" class="login-input" @bind-Value="model.Password" />
+                    <ValidationMessage For="() => model.Password" />
+                </div>
+
+                <button type="submit" class="login-button w-100">Entrar</button>
+
+                <div class="login-extra">
+                    <a href="#" @onclick="ForgotPassword">Esqueceu a senha?</a>
+                </div>
+            </EditForm>
+
+            <div class="login-footer">© @(DateTime.Now.Year) DockQueue</div>
+        </div>
+    </div>
+</section>
+
+@code
+{
+    private LoginModel model = new();
+
+    private class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
+        public string UserName { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Coloque sua lógica de autenticação aqui
+        _nav.NavigateTo("/home");
+        await Task.CompletedTask;
+    }
+
+    private async Task ShowAlert(string message)
+    {
+        await SWA.Aviso(Swal, message);
+    }
+
+    private async Task ShowError(string message)
+    {
+        await SWA.Erro(Swal, message);
+    }
+
+    private async Task ForgotPassword()
+    {
+        //await ShowAlert("Recuperação de senha em breve.");
+    }
+}

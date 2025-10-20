@@ -1,0 +1,172 @@
+@page "/operadores"
+
+<PageTitle>Pessoas</PageTitle>
+
+<section class="boxes-page">
+    <div class="login-container">
+        <div class="login-card" style="max-width:820px;width:100%">
+            <div class="login-brand">
+                <div class="login-logo">PE</div>
+                <h1 class="login-title">Gerenciar Pessoas</h1>
+            </div>
+
+            <EditForm Model="personForm" OnValidSubmit="AddPerson">
+                <DataAnnotationsValidator />
+
+                <div class="login-field">
+                    <label for="nome">Nome</label>
+                    <InputText id="nome" class="login-input" @bind-Value="personForm.Nome" />
+                    <ValidationMessage For="() => personForm.Nome" />
+                </div>
+
+                <div class="login-field">
+                    <label for="login">Login</label>
+                    <InputText id="login" class="login-input" @bind-Value="personForm.Login" />
+                    <ValidationMessage For="() => personForm.Login" />
+                </div>
+
+                <div class="login-field">
+                    <label for="senha">Senha</label>
+                    <InputText id="senha" type="password" class="login-input" @bind-Value="personForm.Senha" />
+                    <ValidationMessage For="() => personForm.Senha" />
+                </div>
+
+                <button type="submit" class="login-button">Adicionar</button>
+            </EditForm>
+
+            <div style="height:12px"></div>
+
+            <div class="login-field">
+                <label>Pessoas</label>
+                <div class="box-list">
+                    @if (people.Count == 0)
+                    {
+                        <div class="box-item empty">Nenhuma pessoa cadastrada.</div>
+                    }
+                    else
+                    {
+                        @foreach (var p in people)
+                        {
+                            <div class="box-item">
+                                <div class="box-meta">
+                                    <div class="box-code">@p.Nome</div>
+                                    <div class="box-desc">Login: @p.Login</div>
+                                </div>
+                                <button class="box-remove" @onclick="(() => RemovePerson(p))">Remover</button>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private List<Person> people = new();
+
+    private class Person
+    {
+        public string Nome { get; set; } = string.Empty;
+        public string Login { get; set; } = string.Empty;
+        public string Senha { get; set; } = string.Empty;
+    }
+
+    private class PersonForm
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
+        [System.ComponentModel.DataAnnotations.MinLength(2, ErrorMessage = "Mínimo 2 caracteres.")]
+        public string Nome { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
+        [System.ComponentModel.DataAnnotations.MinLength(3, ErrorMessage = "Mínimo 3 caracteres.")]
+        public string Login { get; set; } = string.Empty;
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
+        [System.ComponentModel.DataAnnotations.MinLength(4, ErrorMessage = "Mínimo 4 caracteres.")]
+        public string Senha { get; set; } = string.Empty;
+    }
+
+    private PersonForm personForm = new();
+
+    protected override void OnInitialized()
+    {
+        people = new List<Person>
+        {
+            new Person { Nome = "Maria Silva", Login = "maria", Senha = "1234" },
+            new Person { Nome = "João Souza", Login = "joao", Senha = "1234" },
+            new Person { Nome = "Ana Lima", Login = "ana", Senha = "1234" },
+        };
+    }
+
+    private async Task AddPerson()
+    {
+        people.Add(new Person
+        {
+            Nome = personForm.Nome.Trim(),
+            Login = personForm.Login.Trim(),
+            Senha = personForm.Senha
+        });
+
+        personForm = new PersonForm();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemovePerson(Person p)
+    {
+        people.Remove(p);
+    }
+}
+
+<style>
+    .box-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px
+    }
+
+    .box-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        background: var(--default-background)
+    }
+
+        .box-item.empty {
+            justify-content: center;
+            color: var(--text-muted)
+        }
+
+    .box-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px
+    }
+
+    .box-code {
+        font-weight: 700;
+        color: var(--primary-color)
+    }
+
+    .box-desc {
+        color: #cbd5e1
+    }
+
+    .box-remove {
+        height: 36px;
+        padding: 0 12px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(135deg,#ef4444,#f59e0b);
+        color: #0b1220;
+        font-weight: 700;
+        cursor: pointer
+    }
+
+        .box-remove:hover {
+            filter: brightness(1.05)
+        }
+</style>
