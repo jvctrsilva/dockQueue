@@ -1,7 +1,5 @@
 using CurrieTechnologies.Razor.SweetAlert2;
-using DockQueue.Services;
 using DockQueue.Settings;
-using DockQueue.Services.UI;
 using DockQueue.ViewModels;
 using DockQueue.Infra.Ioc;
 
@@ -52,7 +50,11 @@ builder.Services.AddHttpClient("ApiClient", client =>
 {
     client.BaseAddress = new Uri(apiBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
-});
+})
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+    {
+        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+    });
 
 // SweetAlert + suas extensões
 builder.Services.AddSweetAlert2();
@@ -63,15 +65,6 @@ builder.Services.AddApplicationServices(); // suas DI internas
 builder.Services.AddSessionAndCaching();
 
 builder.Services.AddInfrastructure(builder.Configuration);
-
-// Services de UI do front
-builder.Services.AddScoped<UsersService>();
-builder.Services.AddScoped<UserPermissionsService>();
-
-// ViewModels e Services MVVM
-builder.Services.AddScoped<LoginViewModel>();
-builder.Services.AddScoped<AuthViewModel>();
-builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
 

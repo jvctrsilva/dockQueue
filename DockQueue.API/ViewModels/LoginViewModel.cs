@@ -28,7 +28,7 @@ public class LoginViewModel : INotifyPropertyChanged
     }
 
     [Required(ErrorMessage = "Senha é obrigatória")]
-    [MinLength(6, ErrorMessage = "Senha deve ter pelo menos 6 caracteres")]
+    [MinLength(4, ErrorMessage = "Senha deve ter pelo menos 6 caracteres")]
     public string Password
     {
         get => _password;
