@@ -1,0 +1,42 @@
+﻿@page "/home"
+@using DockQueue.Client.Services
+@using DockQueue.Client.ViewModels
+@layout MainLayout
+@inject AuthViewModel AuthViewModel
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject SweetAlertService Swal
+
+<PageTitle>Home - DockQueue</PageTitle>
+
+
+
+
+@if (AuthViewModel.CurrentUser != null)
+{
+    <div class="alert alert-success">
+        <h5>Usuário Logado:</h5>
+        <p><strong>Nome:</strong> @AuthViewModel.CurrentUser.Name</p>
+        <p><strong>Email:</strong> @AuthViewModel.CurrentUser.Email</p>
+        <p><strong>Função:</strong> @AuthViewModel.CurrentUser.Role</p>
+    </div>
+}
+
+@code
+{
+    protected override async Task OnInitializedAsync()
+    {
+        var isAuthenticated = await AuthService.IsAuthenticatedAsync();
+        if (!isAuthenticated)
+        {
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        await SWA.Sucesso(Swal, "Logout realizado com sucesso!");
+        NavigationManager.NavigateTo("/");
+    }
+}

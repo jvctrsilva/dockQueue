@@ -1,8 +1,8 @@
 ﻿using CurrieTechnologies.Razor.SweetAlert2;
 using Microsoft.AspNetCore.Components;
-using DockQueue.Utils;
+using DockQueue.Client.Utils;
 
-namespace DockQueue.Shared;
+namespace DockQueue.Client.Shared;
 
 public class BasePage : ComponentBase
 {

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
 using DockQueue.Application.DTOs;
 
-namespace DockQueue.ViewModels;
+namespace DockQueue.Client.ViewModels;
 
 public class LoginViewModel : INotifyPropertyChanged
 {

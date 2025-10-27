@@ -1,100 +1,130 @@
-using CurrieTechnologies.Razor.SweetAlert2;
-using DockQueue.Settings;
-using DockQueue.ViewModels;
+using System.Security.Claims;
 using DockQueue.Infra.Ioc;
+using Microsoft.OpenApi.Models;
+using DockQueue.Domain.Validation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ==== API e Infra ====
+// -----------------------
+// IoC
+// -----------------------
+builder.Services.AddInfrastructure(builder.Configuration);
+
+// -----------------------
+// Controllers
+// -----------------------
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen(); // se já usa
 
-// JWT/Auth
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
-                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
-builder.Services.AddAuthorization();
-
-// ==== Blazor Server ====
-builder.Services.AddRazorPages(); // necessário para _Host.cshtml
-builder.Services.AddServerSideBlazor()
-    .AddCircuitOptions(opt =>
-    {
-        opt.DetailedErrors = true;
-        opt.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
-    });
-
-builder.Services.AddSignalR(opt =>
+// -----------------------
+// CORS (Blazor / Frontend)
+// Configure no appsettings: "Cors:AllowedOrigins": ["https://localhost:5173", ...]
+// -----------------------
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+builder.Services.AddCors(options =>
 {
-    opt.KeepAliveInterval = TimeSpan.FromSeconds(15);
-    opt.ClientTimeoutInterval = TimeSpan.FromMinutes(20);
+    options.AddPolicy("Frontend", policy =>
+    {
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        else
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+    });
 });
 
-builder.Services.AddHttpContextAccessor();
+// -----------------------
+// JWT Auth
+// Usa AccessTokenMinutes / RefreshTokenDays do appsettings
+// -----------------------
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var keyBytes = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? throw new Exception("JWT Key não configurada"));
+var signingKey = new SymmetricSecurityKey(keyBytes);
 
-var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001";
-builder.Services.AddHttpClient("ApiClient", client =>
-{
-    client.BaseAddress = new Uri(apiBaseUrl);
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
-})
-    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+builder.Services
+    .AddAuthentication(options =>
     {
-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        // Em DEV você pode desligar para testes em http
+        options.RequireHttpsMetadata = true;
+        options.SaveToken = true;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtSettings["Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = jwtSettings["Audience"],
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = signingKey,
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero, // tokens expiram exatamente no horário
+            // (opcional) mapeia role/email se quiser depender desses nomes
+            RoleClaimType = ClaimTypes.Role,
+            NameClaimType = ClaimTypes.Email
+        };
     });
 
-// SweetAlert + suas extensões
-builder.Services.AddSweetAlert2();
-builder.Services.AddWMBOS();
-builder.Services.AddWMBSC();
+builder.Services.AddAuthorization();
 
-builder.Services.AddApplicationServices(); // suas DI internas
-builder.Services.AddSessionAndCaching();
+// -----------------------
+// Swagger centralizado no IoC
+// -----------------------
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddInfrastructureSwagger();
 
-builder.Services.AddInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-// ==== Pipeline ====
+// -----------------------
+// Pipeline
+// -----------------------
 if (app.Environment.IsDevelopment())
 {
-    // app.UseSwagger();
-    // app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
-else
+
+app.UseExceptionHandler(appBuilder =>
 {
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
+    appBuilder.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        var exception = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+
+        if (exception is DomainExceptionValidation)
+        {
+            context.Response.StatusCode = StatusCodes.Status400BadRequest;
+            await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new { error = exception.Message }));
+        }
+    });
+});
+
+// Se for Blazor Server dentro do mesmo projeto, você pode precisar de:
+// app.UseStaticFiles();
 
 app.UseHttpsRedirection();
-app.UseStaticFiles(); // necessário para wwwroot (css/js/img) do Blazor
 
-app.UseRouting();
+// CORS antes de auth/authorization
+app.UseCors("Frontend");
 
-app.UseSession();
-
+// Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
-// API
 app.MapControllers();
-
-// Blazor
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
 
 app.Run();

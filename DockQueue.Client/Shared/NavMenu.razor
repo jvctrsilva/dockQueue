@@ -2,10 +2,11 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject StateService stateService
+
 @inject IActionService ActionService
 
 @using System.Linq;
-@using DockQueue.Services.UI
+@using DockQueue.Client.Services.UI
 @using WMBlazorOverlayScrollbars.WMBOS;
 
 <div id="responsive-overlay" @onclick="() => responsivecloseFn()"></div>

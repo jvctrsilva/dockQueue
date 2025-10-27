@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using DockQueue.Services.UI;
+using DockQueue.Client.Authentication;
+using DockQueue.Client.Services.UI;
+
 namespace DockQueue.Settings;
 
 public static class ServiceCollectionExtensions

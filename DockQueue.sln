@@ -11,9 +11,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Infra.Ioc", "Dock
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Application", "DockQueue.Application\DockQueue.Application.csproj", "{63A9451A-6611-4A95-8FFD-0E4C73BAB09E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Client", "..\DockQueue-master\DockQueue\DockQueue.Client.csproj", "{78FCD311-05C1-67A8-F4C8-CC7F7C642EC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.Client", "DockQueue.Client\DockQueue.Client.csproj", "{78FCD311-05C1-67A8-F4C8-CC7F7C642EC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.API", "..\dockQueue-feature-user-permissions\DockQueue.API\DockQueue.API.csproj", "{680C829C-3901-4483-FA8C-0E38D854C1CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DockQueue.API", "DockQueue.API\DockQueue.API.csproj", "{680C829C-3901-4483-FA8C-0E38D854C1CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

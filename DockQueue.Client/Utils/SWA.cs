@@ -1,6 +1,6 @@
 ﻿using CurrieTechnologies.Razor.SweetAlert2;
 
-namespace DockQueue.Utils;
+namespace DockQueue.Client.Utils;
 
 public static class SWA
 {

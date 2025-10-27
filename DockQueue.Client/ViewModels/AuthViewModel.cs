@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using DockQueue.Application.DTOs;
 
-namespace DockQueue.ViewModels;
+namespace DockQueue.Client.ViewModels;
 
 public class AuthViewModel : INotifyPropertyChanged
 {
