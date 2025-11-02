@@ -1,4 +1,9 @@
 @page "/operadores"
+@using DockQueue.Client.ViewModels
+@using DockQueue.Application.DTOs
+@inject UserViewModel UserVM
+@attribute [Authorize(Policy = "Screen:UsersView")]
+
 
 <PageTitle>Pessoas</PageTitle>
 
@@ -10,25 +15,34 @@
                 <h1 class="login-title">Gerenciar Pessoas</h1>
             </div>
 
-            <EditForm Model="personForm" OnValidSubmit="AddPerson">
+            <!-- Formulário: model é o Form do ViewModel -->
+            <EditForm Model="UserVM.Form" OnValidSubmit="AddPerson">
                 <DataAnnotationsValidator />
 
                 <div class="login-field">
                     <label for="nome">Nome</label>
-                    <InputText id="nome" class="login-input" @bind-Value="personForm.Nome" />
-                    <ValidationMessage For="() => personForm.Nome" />
+                    <InputText id="nome" class="login-input" @bind-Value="UserVM.Form.Nome" />
+                    <ValidationMessage For="() => UserVM.Form.Nome" />
                 </div>
 
                 <div class="login-field">
-                    <label for="login">Login</label>
-                    <InputText id="login" class="login-input" @bind-Value="personForm.Login" />
-                    <ValidationMessage For="() => personForm.Login" />
+                    <label for="login">Login (e-mail)</label>
+                    <InputText id="login" class="login-input" @bind-Value="UserVM.Form.Login" />
+                    <ValidationMessage For="() => UserVM.Form.Login" />
                 </div>
 
                 <div class="login-field">
                     <label for="senha">Senha</label>
-                    <InputText id="senha" type="password" class="login-input" @bind-Value="personForm.Senha" />
-                    <ValidationMessage For="() => personForm.Senha" />
+                    <InputText id="senha" type="password" class="login-input" @bind-Value="UserVM.Form.Senha" />
+                    <ValidationMessage For="() => UserVM.Form.Senha" />
+                </div>
+
+                <div class="login-field">
+                    <label for="role">Perfil</label>
+                    <InputSelect id="role" class="login-input" @bind-Value="UserVM.Form.Role">
+                        <option value="OPERADOR">OPERADOR</option>
+                        <option value="ADMIN">ADMIN</option>
+                    </InputSelect>
                 </div>
 
                 <button type="submit" class="login-button">Adicionar</button>
@@ -38,84 +52,64 @@
 
             <div class="login-field">
                 <label>Pessoas</label>
-                <div class="box-list">
-                    @if (people.Count == 0)
-                    {
-                        <div class="box-item empty">Nenhuma pessoa cadastrada.</div>
-                    }
-                    else
-                    {
-                        @foreach (var p in people)
+
+                @if (UserVM.IsLoading)
+                {
+                    <p>Carregando...</p>
+                }
+                else if (!string.IsNullOrEmpty(UserVM.ErrorMessage))
+                {
+                    <p style="color:#ef4444">@UserVM.ErrorMessage</p>
+                }
+                else if (UserVM.Users.Count == 0)
+                {
+                    <div class="box-item empty">Nenhuma pessoa cadastrada.</div>
+                }
+                else
+                {
+                    <div class="box-list">
+                        @foreach (var p in UserVM.Users)
                         {
                             <div class="box-item">
                                 <div class="box-meta">
-                                    <div class="box-code">@p.Nome</div>
-                                    <div class="box-desc">Login: @p.Login</div>
+                                    <div class="box-code">@p.Name</div>
+                                    <div class="box-desc">Login: @p.Email</div>
                                 </div>
+
+                                <!-- Remover desabilitado por enquanto (sem endpoint) -->
                                 <button class="box-remove" @onclick="(() => RemovePerson(p))">Remover</button>
                             </div>
                         }
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </div>
     </div>
 </section>
 
 @code {
-    private List<Person> people = new();
-
-    private class Person
+    protected override async Task OnInitializedAsync()
     {
-        public string Nome { get; set; } = string.Empty;
-        public string Login { get; set; } = string.Empty;
-        public string Senha { get; set; } = string.Empty;
-    }
-
-    private class PersonForm
-    {
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
-        [System.ComponentModel.DataAnnotations.MinLength(2, ErrorMessage = "Mínimo 2 caracteres.")]
-        public string Nome { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
-        [System.ComponentModel.DataAnnotations.MinLength(3, ErrorMessage = "Mínimo 3 caracteres.")]
-        public string Login { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Campo obrigatório.")]
-        [System.ComponentModel.DataAnnotations.MinLength(4, ErrorMessage = "Mínimo 4 caracteres.")]
-        public string Senha { get; set; } = string.Empty;
-    }
-
-    private PersonForm personForm = new();
-
-    protected override void OnInitialized()
-    {
-        people = new List<Person>
-        {
-            new Person { Nome = "Maria Silva", Login = "maria", Senha = "1234" },
-            new Person { Nome = "João Souza", Login = "joao", Senha = "1234" },
-            new Person { Nome = "Ana Lima", Login = "ana", Senha = "1234" },
-        };
+        await UserVM.LoadAsync(); // busca usuários na API
     }
 
     private async Task AddPerson()
     {
-        people.Add(new Person
-        {
-            Nome = personForm.Nome.Trim(),
-            Login = personForm.Login.Trim(),
-            Senha = personForm.Senha
-        });
-
-        personForm = new PersonForm();
-        await InvokeAsync(StateHasChanged);
+        await UserVM.AddUserAsync();
+        StateHasChanged();
     }
 
-    private void RemovePerson(Person p)
+    private async Task RemovePerson(UserDto p)
     {
-        people.Remove(p);
+        // (opcional) confirmação simples
+        if (await JS.InvokeAsync<bool>("confirm", $"Remover {p.Name}?"))
+        {
+            await UserVM.RemoveUserAsync(p);
+            StateHasChanged();
+        }
     }
+    [Inject] IJSRuntime JS { get; set; } = default!;
+
 }
 
 <style>
@@ -163,10 +157,7 @@
         background: linear-gradient(135deg,#ef4444,#f59e0b);
         color: #0b1220;
         font-weight: 700;
-        cursor: pointer
+        cursor: not-allowed;
+        opacity: .6
     }
-
-        .box-remove:hover {
-            filter: brightness(1.05)
-        }
 </style>

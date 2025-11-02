@@ -1,9 +1,12 @@
 @page "/permissoes-usuario"
 @inject SweetAlertService Swal
 @inject NavigationManager Nav
-@inject UsersService UsersService
-@using DockQueue.Client.Services.UI
+@inject UserService UserService
+@using DockQueue.Client.Services
+@using DockQueue.Application.DTOs
 @using Microsoft.AspNetCore.Components
+@attribute [Authorize(Policy = "Screen:PermissionsView")]
+
 
 <div class="container-fluid mt-3">
 	<div class="card custom-card">
@@ -35,7 +38,7 @@
 								<td>@u.Name</td>
 								<td>@u.Email</td>
 								<td>
-									<span class="badge @(u.Active ? "bg-success" : "bg-secondary")">@(u.Active ? "Ativo" : "Inativo")</span>
+									<span class="badge bg-info">@u.Role</span>
 								</td>
 								<td class="text-end">
 									<button class="btn btn-sm btn-primary" @onclick="() => Edit(u.Id)">Editar</button>
@@ -54,10 +57,10 @@
 </div>
 
 @code {
-	private List<UserListItem> users = new();
+	private List<UserDto> users = new();
 	private string? searchTerm;
 
-	private IEnumerable<UserListItem> FilteredUsers => string.IsNullOrWhiteSpace(searchTerm)
+	private IEnumerable<UserDto> FilteredUsers => string.IsNullOrWhiteSpace(searchTerm)
 		? users
 		: users.Where(u => (u.Name?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false)
 			|| (u.Email?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
@@ -69,7 +72,7 @@
 
 	private async Task LoadAsync()
 	{
-		users = await UsersService.GetUsersAsync();
+		users = await UserService.GetAllAsync();
 	}
 
 	private Task Reload()
@@ -77,7 +80,7 @@
 		return LoadAsync();
 	}
 
-	private void Edit(Guid id)
+	private void Edit(int id)
 	{
 		Nav.NavigateTo($"/permissoes-usuario/editar/{id}");
 	}

@@ -1,8 +1,9 @@
-using System.Text;
-using System.Text.Json;
 using DockQueue.Application.DTOs;
 using DockQueue.Client.Services.UI;
 using DockQueue.Client.ViewModels;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Text;
+using System.Text.Json;
 
 namespace DockQueue.Client.Services;
 
@@ -11,12 +12,15 @@ public class AuthService
     private readonly HttpClient _httpClient;
     private readonly AuthViewModel _authViewModel;
     private readonly SessionService _sessionService;
+    private readonly AuthenticationStateProvider _authProvider;
 
-    public AuthService(IHttpClientFactory httpClientFactory, AuthViewModel authViewModel, SessionService sessionService)
+    public AuthService(IHttpClientFactory httpClientFactory, AuthViewModel authViewModel, SessionService sessionService, AuthenticationStateProvider authProvider)
     {
         _httpClient = httpClientFactory.CreateClient("ApiClient");
         _authViewModel = authViewModel;
         _sessionService = sessionService;
+        _authProvider = authProvider;
+
     }
 
     public async Task<bool> LoginAsync(LoginViewModel loginViewModel)
@@ -41,6 +45,9 @@ public class AuthService
                 {
                     _authViewModel.SetAuthData(authResponse);
                     await SaveAuthToSession(authResponse);
+
+                    // **força recomputar claims no Blazor**
+                    (_authProvider as JwtAuthenticationStateProvider)?.Refresh();
                     return true;
                 }
             }
@@ -62,6 +69,8 @@ public class AuthService
     {
         _authViewModel.ClearAuthData();
         await ClearAuthFromSession();
+
+        (_authProvider as JwtAuthenticationStateProvider)?.Refresh();
     }
 
     public async Task<bool> IsAuthenticatedAsync()

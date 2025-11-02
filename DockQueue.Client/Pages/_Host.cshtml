@@ -1,176 +1,39 @@
 ﻿@page "/"
-@namespace DockQueue.Client.Pages
-@using DockQueue.Client.Services.UI
 @using Microsoft.AspNetCore.Components.Web
+@namespace DockQueue.Client.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
-
-@inject IHttpContextAccessor HttpContextAccessor
-@inject StateService _stateService
-
 @{
-    var appState = _stateService.GetAppState();
-    var url = HttpContextAccessor.HttpContext.Request.Path.ToString();
+    Layout = null;
 }
-
-
 <!DOCTYPE html>
-<html lang="pt-br" data-toggled="close"
-      @if (!string.IsNullOrEmpty(appState?.Direction))
-      {
-                <text>dir="@appState.Direction"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.NavigationStyles))
-{
-                <text>data-nav-layout="@appState.NavigationStyles"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.ColorTheme))
-{
-                <text>data-theme-mode="@appState.ColorTheme"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.HeaderColor))
-{
-                <text>data-header-styles="@appState.HeaderColor"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.MenuColor))
-{
-                <text>data-menu-styles="@appState.MenuColor"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.MenuStyles))
-{
-                <text>data-nav-style="@appState.MenuStyles"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.PageStyles))
-{
-                <text>data-page-style="@appState.PageStyles"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.WidthStyles))
-{
-                <text>data-width="@appState.WidthStyles"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.MenuPosition))
-{
-                <text>data-menu-position="@appState.MenuPosition"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.HeaderPosition))
-{
-                <text>data-header-position="@appState.HeaderPosition"</text>
-}
-@if (!string.IsNullOrEmpty(appState?.BackgroundImage))
-{
-                <text>data-bg-img="@appState.BackgroundImage"</text>
-}
-@{
-                string style = "";
+<html lang="pt-br" data-bs-theme="dark" data-toggled="close">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="~/" />
 
-                if (!string.IsNullOrEmpty(appState?.ThemePrimary))
-                {
-                                style += $"--primary-rgb: {appState.ThemePrimary}; ";
-                }
-                if (!string.IsNullOrEmpty(appState?.ThemeBackground))
-                {
-                                style += $"--body-bg-rgb: {appState.ThemeBackground}; ";
-                                style += $"--body-bg-rgb2: {appState.ThemeBackground1}; ";
-                                style += $"--light-rgb: {appState.ThemeBackground1}; ";
-                                style += $"--form-control-bg: rgb({appState.ThemeBackground1}); ";
-                                style += $"--input-border: rgba(255,255,255,0.1); ";
-                }
-}
-    style="@style">
-    <head>
-        <!-- META DATA -->
-        <meta charset="UTF-8">
-        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="Author" content="Os Guri">
+    <link rel="icon" href="~/icon.ico" type="image/x-icon">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    <link href="/assets/css/icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/libs/tom-select/css/tom-select.bootstrap5.min.css">
+    <link href="/css/styles.css" rel="stylesheet" />
 
-        <base href="~/" />
-
-        <!-- Favicon -->
-        <link rel="icon" href="~/icon.ico" type="image/x-icon">
-
-        <link href="/assets/css/styles.css" rel="stylesheet">
-        
-
-        <!-- Icons Css -->
-        <link href="/assets/css/icons.css" rel="stylesheet" >
-
-        <!-- Tom Select CSS -->
-        <link rel="stylesheet" href="/assets/libs/tom-select/css/tom-select.bootstrap5.min.css">
-
-        <!-- PWA REFS-->
-        <link href="manifest.json" rel="manifest" />
-        <link rel="apple-touch-icon" sizes="512x512" href="~/icon.ico" />
-
-        <component type="typeof(HeadOutlet)" render-mode="Server" />
-
-        <!-- CSS PERSONALIZADO -->
-        <link href="/css/styles.css" rel="stylesheet" />
+    <component type="typeof(HeadOutlet)" render-mode="Server" />
 </head>
 <body>
-
     <component type="typeof(App)" render-mode="Server" />
 
-    <!-- Popper JS -->
+    <!-- Seus scripts globais -->
     <script src="/assets/libs/@@popperjs/core/umd/popper.min.js"></script>
-
-    <!-- Bootstrap JS -->
     <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <script async defer>
-        window.onload = function () {
-            setTimeout(() => {
-                let javascriptLinks = [
-                    "/assets/js/custom.js",
-                    "_content/NoUiSlider.Blazor/dist/bundle.js",
-                ]
-
-                javascriptLinks.map((link) => {
-                    var scriptElement = document.createElement('script');
-                    scriptElement.src = link;
-                    document.head.appendChild(scriptElement);
-                })
-
-            }, 100);
-        };
-    </script>
-
-    <script>
-        // Load scripts after DOM content is loaded
-        document.addEventListener("DOMContentLoaded", function () {
-            var scriptUrls = [
-
-                "../assets/libs/tom-select/js/tom-select.complete.min.js",
-
-            ];
-            scriptUrls.forEach(function (url) {
-                var script = document.createElement("script");
-                script.src = url;
-                document.body.appendChild(script);
-            });
-        });
-    </script>
-
-    <!-- Interop JS -->
-    <script src="_framework/blazor.server.js"></script>
+    <script src="/assets/libs/tom-select/js/tom-select.complete.min.js"></script>
     <script src="/js/javaScriptInterop.js"></script>
     <script src="/js/resizeInterop.js"></script>
-
-    <script>
-        function CaptureElementAndCallBlazorFunction(event, menuData) {
-            var element = event.currentTarget;
-            var menuId = element.dataset.menuId;
-            window.DotNet.invokeMethodAsync("DockQueue.SubNavMenu", "TriggerFunction", element, menuData, null);
-        }
-
-    </script>
-
-    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
-    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
     <script src="_content/CurrieTechnologies.Razor.SweetAlert2/sweetAlert2.min.js"></script>
-
-    <!-- Flatpickr JS -->
     <script src="_content/FlatpickrBlazor/flatpickr.min.js"></script>
     <script src="_content/FlatpickrBlazor/flatpickr.blazor.js"></script>
+
+    <!-- Blazor bootstrap (apenas aqui!) -->
+    <script src="_framework/blazor.server.js"></script>
 </body>
 </html>

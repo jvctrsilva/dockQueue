@@ -45,6 +45,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\DockQueue\DockQueue.Application\DockQueue.Application.csproj" />
+	  <ProjectReference Include="..\DockQueue.Application\DockQueue.Application.csproj" />
 	</ItemGroup>
 	
 </Project>

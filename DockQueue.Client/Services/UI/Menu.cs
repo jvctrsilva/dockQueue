@@ -1,3 +1,5 @@
+using DockQueue.Domain.ValueObjects;
+
 namespace DockQueue.Client.Services.UI;
 
 public class MainMenuItems
@@ -15,9 +17,9 @@ public class MainMenuItems
     public bool DirChange { get; set; }
     public List<string> Roles { get; set; } // Adicione esta linha
     public MainMenuItems[]? Children { get; set; }
-
+    public Screen? ScreenRequired { get; init; }
     // Constructor to initialize an instance of MainMenuItems
-    public MainMenuItems(string title = "", string path = "", int randomNumber = 0, string icon = "", string type = "", string menuTitle = "", string badgeClass = "", string badgeValue = "", bool active = false, bool selected = false, bool dirChange = false, MainMenuItems[]? children = null, List<string>? roles = null)
+    public MainMenuItems(string title = "", string path = "", int randomNumber = 0, string icon = "", string type = "", string menuTitle = "", string badgeClass = "", string badgeValue = "", bool active = false, bool selected = false, bool dirChange = false, MainMenuItems[]? children = null, List<string>? roles = null, Screen? screenRequired = null)
     {
         MenuTitle       = menuTitle;
         Title           = title;
@@ -32,6 +34,7 @@ public class MainMenuItems
         DirChange       = dirChange;
         Children        = children;
         Roles           = roles ?? new List<string>(); // Inicializa roles
+        ScreenRequired = screenRequired;
     }
 
     // Construtor para inicializar uma instância de MainMenuItems
@@ -50,6 +53,7 @@ public class MainMenuItems
         DirChange       = item.DirChange;
         Children        = item.Children;
         Roles           = item.Roles;
+        ScreenRequired  = item.ScreenRequired;
     }
 
     // Construtor sem parâmetros

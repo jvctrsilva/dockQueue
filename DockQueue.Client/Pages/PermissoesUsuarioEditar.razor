@@ -1,157 +1,189 @@
-@page "/permissoes-usuario/editar/{id:guid}"
-@inject SweetAlertService Swal
+@page "/permissoes-usuario/editar/{userId:int}"
+@using DockQueue.Domain.ValueObjects
+@using DockQueue.Application.DTOs
+@using DockQueue.Application.DTOs.Permissions
+@inject PermissionEditorViewModel VM
 @inject NavigationManager Nav
-@inject UserPermissionsService PermissionService
-@inject UsersService UserService
-@using DockQueue.Client.Services.UI
-@using Microsoft.AspNetCore.Components
-
-<div class="container-fluid mt-3">
-	<div class="card custom-card">
-		<div class="card-header d-flex justify-content-between align-items-center">
-			<div class="card-title">Permissões: @userName</div>
-			<button class="btn btn-outline-secondary" @onclick="GoBack">Voltar</button>
-		</div>
-		<div class="card-body">
-			<ul class="nav nav-tabs mb-3">
-				<li class="nav-item">
-					<button class="nav-link @(activeTab == Tab.Status ? "active" : null)" @onclick="(() => SetTab(Tab.Status))">Status</button>
-				</li>
-				<li class="nav-item">
-					<button class="nav-link @(activeTab == Tab.Boxes ? "active" : null)" @onclick="(() => SetTab(Tab.Boxes))">Boxes</button>
-				</li>
-				<li class="nav-item">
-					<button class="nav-link @(activeTab == Tab.Visualizacao ? "active" : null)" @onclick="(() => SetTab(Tab.Visualizacao))">Visualização</button>
-				</li>
-			</ul>
-
-			@if (activeTab == Tab.Status)
-			{
-				<div>
-					<div class="mb-2 text-muted">Quais status o usuário pode atribuir aos motoristas:</div>
-					<div class="row g-2">
-						@foreach (var s in allDriverStatuses)
-						{
-							<div class="col-12 col-md-6 col-lg-4">
-								<div class="form-check">
-								<input class="form-check-input" type="checkbox" checked="@selectedStatuses.Contains(s.Key)" @onchange="(ChangeEventArgs e) => ToggleStatus(s, (bool)e.Value!)" id="status_@s.Key" />
-									<label class="form-check-label" for="status_@s.Key">@s.Name</label>
-								</div>
-							</div>
-						}
-					</div>
-				</div>
-			}
-
-			@if (activeTab == Tab.Boxes)
-			{
-				<div>
-					<div class="mb-2 text-muted">Selecione as docas (1 a 10) que o usuário pode operar:</div>
-					<div class="row g-2">
-						@foreach (var b in boxes)
-						{
-							<div class="col-6 col-md-3 col-lg-2">
-								<div class="form-check">
-									<input class="form-check-input" type="checkbox" checked="@selectedBoxes.Contains(b)" @onchange="(ChangeEventArgs e) => ToggleBox(b, (bool)e.Value!)" id="box_@b" />
-									<label class="form-check-label" for="box_@b">Box @b</label>
-								</div>
-							</div>
-						}
-					</div>
-				</div>
-			}
-
-			@if (activeTab == Tab.Visualizacao)
-			{
-				<div>
-					<div class="mb-2 text-muted">Selecione as telas que o usuário pode acessar:</div>
-					<div class="row g-2">
-						@foreach (var v in allViews)
-						{
-							<div class="col-12 col-md-6 col-lg-4">
-								<div class="form-check">
-									<input class="form-check-input" type="checkbox" checked="@selectedViews.Contains(v.Key)" @onchange="(ChangeEventArgs e) => ToggleView(v.Key, (bool)e.Value!)" id="view_@v.Key" />
-									<label class="form-check-label" for="view_@v.Key">@v.Name</label>
-								</div>
-							</div>
-						}
-					</div>
-				</div>
-			}
-
-			<div class="mt-3 d-flex justify-content-end">
-				<button class="btn btn-primary" @onclick="Save">Salvar</button>
-			</div>
-		</div>
-	</div>
-</div>
+@inject SweetAlertService Swal 
+@attribute [Authorize(Policy = "Screen:PermissionsView")]
 
 @code {
-	[Parameter] public Guid id { get; set; }
+    [Parameter] public int userId { get; set; }
+    private int activeTab = 0;
 
-	private string userName = string.Empty;
-	private Tab activeTab = Tab.Status;
-
-	private List<DriverStatusItem> allDriverStatuses = new();
-	private HashSet<string> selectedStatuses = new(StringComparer.OrdinalIgnoreCase);
-
-	private List<int> boxes = Enumerable.Range(1, 10).ToList();
-	private HashSet<int> selectedBoxes = new();
-
-	private List<ViewItem> allViews = new();
-	private HashSet<string> selectedViews = new(StringComparer.OrdinalIgnoreCase);
-
-	protected override async Task OnInitializedAsync()
-	{
-		var user = await UserService.GetUserAsync(id);
-		userName = user?.Name ?? "Usuário";
-
-		allDriverStatuses = await PermissionService.GetAllDriverStatusesAsync();
-		allViews = await PermissionService.GetAllViewsAsync();
-
-		var current = await PermissionService.GetUserPermissionsAsync(id);
-		selectedStatuses = new HashSet<string>(current.StatusKeys, StringComparer.OrdinalIgnoreCase);
-		selectedBoxes = new HashSet<int>(current.Boxes);
-		selectedViews = new HashSet<string>(current.ViewKeys, StringComparer.OrdinalIgnoreCase);
-	}
-
-	private void SetTab(Tab t) => activeTab = t;
-
-	private void ToggleStatus(DriverStatusItem status, bool isChecked)
-	{
-		if (isChecked) selectedStatuses.Add(status.Key); else selectedStatuses.Remove(status.Key);
-	}
-
-	private void ToggleBox(int box, bool isChecked)
-	{
-		if (isChecked) selectedBoxes.Add(box); else selectedBoxes.Remove(box);
-	}
-
-	private void ToggleView(string key, bool isChecked)
-	{
-		if (isChecked) selectedViews.Add(key); else selectedViews.Remove(key);
-	}
-
-	private async Task Save()
-	{
-		var dto = new UserPermissionsUpdate
-		{
-			UserId = id,
-			StatusKeys = selectedStatuses.ToList(),
-			Boxes = selectedBoxes.OrderBy(x => x).ToList(),
-			ViewKeys = selectedViews.ToList()
-		};
-
-		await PermissionService.SaveUserPermissionsAsync(dto);
-		await Swal.FireAsync("Sucesso", "Permissões salvas com sucesso.", "success");
-	}
-
-	private void GoBack() => Nav.NavigateTo("/permissoes-usuario");
-
-    public enum Tab
+    // Alinhar opções com seu enum atual
+    private readonly (string Label, Screen Flag)[] screenOptions = new[]
     {
-        Status, 
-        Boxes, 
-        Visualizacao
+        ("Usuários",       Screen.UsersView),
+        ("Filas",          Screen.QueueView),
+        ("Docas",          Screen.BoxesView),
+        ("Status",         Screen.StatusView),
+        ("Configurações",  Screen.SettingsView),
+        ("Permissões",     Screen.PermissionsView),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VM.LoadAsync(userId);
     }
+
+    private bool HasScreen(Screen f) => (VM.AllowedScreens & f) == f;
+
+    private async Task Save()
+    {
+        var ok = await VM.SaveAsync();
+        if (ok)
+        {
+            // opcional: toast/alert
+            await Swal.FireAsync("Sucesso", "Permissões salvas com sucesso.", "success");
+
+            Nav.NavigateTo("/permissoes-usuario", forceLoad: false);
+            return;
+        }
+
+        // opcional: erro
+        await Swal.FireAsync("Erro", VM.Error ?? "Falha ao salvar.", "error");
+    }
+
+    private bool saveOk = false;
+
 }
+
+<h3 class="mb-3">Permissões do Usuário <span class="text-muted">(#@userId)</span></h3>
+
+@if (VM.IsLoading)
+{
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="spinner-border" role="status"></div>
+        <strong>Carregando...</strong>
+    </div>
+}
+@if (!string.IsNullOrWhiteSpace(VM.Error))
+{
+    <div class="alert alert-danger" role="alert">@VM.Error</div>
+}
+@if (saveOk)
+{
+    <div class="alert alert-success" role="alert">Permissões salvas com sucesso.</div>
+}
+
+<div class="mb-3">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 0 ? "active" : "")" @onclick="() => activeTab = 0">Status</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 1 ? "active" : "")" @onclick="() => activeTab = 1">Boxes</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(activeTab == 2 ? "active" : "")" @onclick="() => activeTab = 2">Telas</button>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content">
+    @if (activeTab == 0)
+    {
+        <div class="card">
+            <div class="card-header">Status permitidos</div>
+            <div class="card-body">
+                @if (VM.AllStatuses is { Count: > 0 })
+                {
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2">
+                        @foreach (var s in VM.AllStatuses)
+                        {
+                            var checkedVal = VM.SelectedStatusIds.Contains(s.Id);
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="status_@s.Id"
+                                           checked="@checkedVal"
+                                           @onchange="(e) => VM.ToggleStatus(s.Id, (bool)e.Value!)" />
+                                    <label class="form-check-label" for="status_@s.Id">
+                                        @s.Name
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">Nenhum status encontrado.</div>
+                }
+            </div>
+        </div>
+    }
+    else if (activeTab == 1)
+    {
+        <div class="card">
+            <div class="card-header">Boxes permitidos</div>
+            <div class="card-body">
+                @if (VM.AllBoxes is { Count: > 0 })
+                {
+                    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2">
+                        @foreach (var b in VM.AllBoxes)
+                        {
+                            var checkedVal = VM.SelectedBoxIds.Contains(b.Id);
+                            <div class="col">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           id="box_@b.Id"
+                                           checked="@checkedVal"
+                                           @onchange="(e) => VM.ToggleBox(b.Id, (bool)e.Value!)" />
+                                    <label class="form-check-label" for="box_@b.Id">
+                                        @b.Name
+                                    </label>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">Nenhum box encontrado.</div>
+                }
+            </div>
+        </div>
+    }
+    else if (activeTab == 2)
+    {
+        <div class="card">
+            <div class="card-header">Telas visíveis</div>
+            <div class="card-body">
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2">
+                    @foreach (var opt in screenOptions)
+                    {
+                        var isOn = HasScreen(opt.Flag);
+                        <div class="col">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox"
+                                       role="switch"
+                                       id="screen_@opt.Flag"
+                                       checked="@isOn"
+                                       @onchange="(e) => VM.ToggleScreen(opt.Flag, (bool)e.Value!)" />
+                                <label class="form-check-label" for="screen_@opt.Flag">
+                                    @opt.Label
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="d-flex gap-2 mt-3">
+    <button class="btn btn-primary" @onclick="Save" disabled="@VM.IsLoading">
+        @if (VM.IsLoading)
+        {
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        }
+        Salvar
+    </button>
+    <button class="btn btn-outline-secondary" @onclick="() => VM.LoadAsync(userId)" disabled="@VM.IsLoading">
+        Recarregar
+    </button>
+</div>

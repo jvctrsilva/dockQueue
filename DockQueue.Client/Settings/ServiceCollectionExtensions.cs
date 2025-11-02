@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using DockQueue.Client.Authentication;
 using DockQueue.Client.Services.UI;
 
-namespace DockQueue.Settings;
+namespace DockQueue.Client.Settings;
 
 public static class ServiceCollectionExtensions
 {

@@ -8,8 +8,8 @@ namespace DockQueue.Application.Interfaces
         Task<List<UserDto>> GetAllUsersAsync();
         Task<UserDto> GetUserByIdAsync(int id);
         Task<UserDto> CreateUserAsync(CreateUserDto createdUserDto);
-
         Task<UserDto?> GetByEmailAsync(string email);
+        Task DeleteUserAsync(int id);
         Task<bool> UpdateRefreshTokenAsync(int userId, string refreshToken, DateTime? expiry);
         Task<(string accessToken, string refreshToken)?> RotateRefreshTokenAsync(string refreshToken, string accessToken);
     }

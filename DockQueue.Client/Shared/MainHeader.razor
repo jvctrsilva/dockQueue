@@ -1,10 +1,13 @@
 @using System.Security.Claims
 @using DockQueue.Client.Authentication
 @using DockQueue.Client.Services.UI
+@using DockQueue.Client.Services
 @using WMBlazorOverlayScrollbars.WMBOS
+@using CurrieTechnologies.Razor.SweetAlert2
 
+@inject SweetAlertService Swal
 @inject IJSRuntime JSRuntime
-
+@inject AuthService AuthService
 @inject AuthenticationStateProvider _authState
 @inject StateService stateService
 @inject NavigationManager navManager
@@ -31,12 +34,10 @@
 
         </div>
         <!-- End::header-content-left - ToggleMenu -->
-
         <!-- Start::header-content-right -->
         <div class="header-content-right">
 
             <!-- End::header-element - Tela cheia -->
-
             <!-- Start::header-element -->
             <div class="header-element">
 
@@ -59,11 +60,8 @@
                 </ul>
             </div>
             <!-- End::header-element -->
-
             <!-- Start::header-element - Ajustes do site -->
             <div class="header-element">
-
-
             </div>
             <!-- End::header-element - Ajustes do site -->
 
@@ -76,24 +74,26 @@
 </header>
 
 
-@code 
+@code
 {
     public class NotifyList
     {
-        public int id               { get; set; }
-        public string? icon         { get; set; }
-        public string? iconBg       { get; set; }
-        public string? title        { get; set; }
-        public string? description  { get; set; }
+        public int id { get; set; }
+        public string? icon { get; set; }
+        public string? iconBg { get; set; }
+        public string? title { get; set; }
+        public string? description { get; set; }
     }
+
+
 
     private async void ToggleMenu()
     {
-        var toggled             = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
-        var verticalStyle       = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-vertical-style");
-        var navStyle            = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-style");
-        var isdoubleMenuActive  = await JSRuntime.InvokeAsync<bool>("interop.isEleExist", ".double-menu-active");
-        var inner               = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
+        var toggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
+        var verticalStyle = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-vertical-style");
+        var navStyle = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-style");
+        var isdoubleMenuActive = await JSRuntime.InvokeAsync<bool>("interop.isEleExist", ".double-menu-active");
+        var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
 
         if (inner <= 992)
         {
@@ -170,9 +170,18 @@
         await JSRuntime.InvokeAsync<string>("interop.setLocalStorageItem", "ynexcolortheme", val);
         await stateService.colorthemeFn(val, true);
     }
-
+    private bool _busy;
     private async Task Logout()
     {
-        navManager.NavigateTo("/", true);
+        if (_busy) return;
+        _busy = true;
+
+        await AuthService.LogoutAsync();
+        await Swal.FireAsync("Pronto!", "Logout realizado com sucesso!", "success");
+
+        // Use o MESMO nome que você injetou (navManager)
+        navManager.NavigateTo("/login");
+
+        _busy = false;
     }
 }

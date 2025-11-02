@@ -1,10 +1,11 @@
+using DockQueue.Domain.ValueObjects;
+
 namespace DockQueue.Client.Services.UI;
 
 public class MenuDataService
 {
     private List<MainMenuItems> MenuData = new List<MainMenuItems>()
     {
-        new MainMenuItems(),
         new MainMenuItems(
             path: "/home",
             type: "link",
@@ -13,7 +14,20 @@ public class MenuDataService
             badgeClass: "bg-warning-transparent",
             selected: false,
             active: false,
-            dirChange: false
+            dirChange: false,
+            screenRequired:null 
+        ),
+        new MainMenuItems(
+            path: "/status",
+            type: "link",
+            title: "Status",
+            icon: "bx bx-list-check",
+            badgeClass: "bg-info-transparent",
+            selected: false,
+            active: false,
+            dirChange: false,
+            roles: null,               // sem filtro por role
+            screenRequired: Screen.StatusView // exige a flag StatusView
         ),
         new MainMenuItems(
             path: "/boxes",
@@ -23,7 +37,8 @@ public class MenuDataService
             badgeClass: "bg-success-transparent",
             selected: false,
             active: false,
-            dirChange: false
+            dirChange: false,
+            screenRequired: Screen.BoxesView
         ),
         new MainMenuItems(
             path: "/operadores",
@@ -33,7 +48,8 @@ public class MenuDataService
             badgeClass: "bg-warning-transparent",
             selected: false,
             active: false,
-            dirChange: false
+            dirChange: false,
+            screenRequired: Screen.UsersView
         ),
         new MainMenuItems(
             path: "/horario-funcionamento",
@@ -43,7 +59,8 @@ public class MenuDataService
             badgeClass: "bg-info-transparent",
             selected: false,
             active: false,
-            dirChange: false
+            dirChange: false,
+            screenRequired: Screen.SettingsView
         ),
         new MainMenuItems(
             path: "/permissoes-usuario",
@@ -53,7 +70,8 @@ public class MenuDataService
             badgeClass: "bg-info-transparent",
             selected: false,
             active: false,
-            dirChange: false
+            dirChange: false,
+            screenRequired: Screen.PermissionsView
         ),
     };
 

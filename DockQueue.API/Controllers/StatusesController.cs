@@ -6,6 +6,7 @@ using DockQueue.Application.Interfaces;
 namespace DockQueue.Api.Controllers
 {
     [ApiController]
+    [Authorize(Policy = "Screen:StatusView")]
     [Route("api/[controller]")]
     public class StatusesController : ControllerBase
     {
@@ -35,5 +36,13 @@ namespace DockQueue.Api.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Put(int id, [FromBody] UpdateStatusDto dto)
             => Ok(await _service.UpdateAsync(id, dto));
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _service.DeleteAsync(id);
+            return NoContent();
+        }
     }
 }

@@ -4,6 +4,8 @@
 @using DockQueue.Client.Services.UI
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components
+@attribute [Authorize(Policy = "Screen:SettingsView")]
+
 
 <div class="container-fluid mt-3">
     <div class="card custom-card">
