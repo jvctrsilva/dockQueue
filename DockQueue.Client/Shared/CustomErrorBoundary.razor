@@ -1,0 +1,134 @@
+﻿@inject IJSRuntime js
+
+<!-- Start::error-page -->
+<div class="page error-bg" id="particles-js">
+
+    <div class="main-error-wrapper page-h"> 
+        <img src="../assets/images/Error500.png" class="error-page-img" alt="error">
+        <h2 class="title">Algo deu errado ao processar sua solicitação no servidor!</h2> 
+        <h6 class="sub_title">Caso esse erro persista, entre em contato com o suporte.</h6>
+        <a class="btn btn-outline-danger" @onclick="Voltar">Voltar ao início</a>
+    </div> 
+</div>
+<!-- End::error-page -->
+
+@code
+{
+    [Parameter, EditorRequired]
+    public EventCallback OnHandle { get; set; }
+
+    [Parameter]
+    public Exception Error { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState> _authState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var user = await _authState;
+            await HandleErrorAsync(Error, user.User);
+        }
+        catch (Exception) { }
+    }
+
+    private async Task HandleErrorAsync(Exception ex, System.Security.Claims.ClaimsPrincipal user)
+    {
+        //await LogService.LogAsync(ex, user);
+    }
+
+    private void Voltar()
+    {
+        OnHandle.InvokeAsync();
+    }
+}
+
+<style>
+    /* Start:: error */
+    .page {
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+    }
+
+    .main-error-wrapper {
+        flex: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-direction: column !important;
+        padding: 20px !important;
+        text-align: center !important;
+    }
+
+        .main-error-wrapper .title {
+            font-weight: 500 !important;
+            letter-spacing: -.5px !important;
+            margin-block-end: 15px !important;
+            font-size: 1.75rem !important;
+        }
+
+        .main-error-wrapper .sub_title {
+            margin-block-end: 40px !important;
+            font-size: 14px !important;
+            color: rgb(1, 98, 232) !important;
+        }
+
+        .main-error-wrapper .btn,
+        .main-error-wrapper .sp-container button {
+            border-width: 2px !important;
+            font-weight: 700 !important;
+        }
+
+        .main-error-wrapper.wrapper-1 {
+            min-height: 100vh !important;
+        }
+
+    /* Global styles */
+    img {
+        vertical-align: middle !important;
+        border-style: none !important;
+        max-width: 100% !important;
+    }
+
+    h1 {
+        line-height: 1 !important;
+        font-size: 150px !important;
+        font-weight: 700 !important;
+    }
+
+    .h1,
+    .h2,
+    .h3,
+    .h4,
+    .h5,
+    .h6,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        color: #031b4e !important;
+    }
+
+    .error-bg {
+        background-color: rgb(1 98 232 / 50%) !important;
+    }
+
+    /* Responsive styles */
+    @@media (min-width: 768px) {
+        .error-page-img {
+            height: 30% !important;
+        }
+    }
+
+    @@media (max-width: 360px) {
+        .main-error-wrapper h1 {
+            font-size: 130px !important;
+        }
+    }
+    /* End:: error */
+</style>

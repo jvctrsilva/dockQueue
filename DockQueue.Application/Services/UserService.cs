@@ -78,6 +78,11 @@ namespace DockQueue.Application.Services
             return true;
         }
 
+        public async Task DeleteUserAsync(int id)
+        {
+            await _repo.DeleteAsync(id);
+        }
+
         // ========= Refresh Token =========
 
         public async Task<(string accessToken, string refreshToken)?> RotateRefreshTokenAsync(string refreshToken, string accessToken)

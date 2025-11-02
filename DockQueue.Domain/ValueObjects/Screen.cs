@@ -5,14 +5,14 @@ namespace DockQueue.Domain.ValueObjects
 	public enum Screen
 	{
 		None = 0,
-		Dashboard = 1 << 0,
+		UsersView = 1 << 0,
 		QueueView = 1 << 1,
 		BoxesView = 1 << 2,
-		StatusAdmin = 1 << 3,
-		Settings = 1 << 4,
-		Reports = 1 << 5,
+		StatusView = 1 << 3,
+		SettingsView = 1 << 4,
+		PermissionsView = 1 << 5,
 
-		// Atalho para “tudo liberado” — útil para ADMIN.
-		All = Dashboard | QueueView | BoxesView | StatusAdmin | Settings | Reports
-	}
+        // Atalho para “tudo liberado” — útil para ADMIN.
+        All = UsersView | QueueView | BoxesView | StatusView | SettingsView | PermissionsView
+    }
 }

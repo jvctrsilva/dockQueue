@@ -1,0 +1,13 @@
+﻿@page "/home"
+@using DockQueue.Client.Services
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var ok = await AuthService.IsAuthenticatedAsync();
+        if (!ok)
+            Nav.NavigateTo("/login", true);
+    }
+}

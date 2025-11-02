@@ -56,6 +56,11 @@ namespace DockQueue.Application.Services
             return Map(entity);
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            await _repo.DeleteAsync(id);
+        }
+
         private static StatusDto Map(Status s) => new()
         {
             Id = s.Id,

@@ -1,0 +1,39 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@namespace DockQueue.Client.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="pt-br" data-bs-theme="dark" data-toggled="close">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="~/" />
+
+    <link rel="icon" href="~/icon.ico" type="image/x-icon">
+    <link href="/assets/css/styles.css" rel="stylesheet">
+    <link href="/assets/css/icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/libs/tom-select/css/tom-select.bootstrap5.min.css">
+    <link href="/css/styles.css" rel="stylesheet" />
+
+    <component type="typeof(HeadOutlet)" render-mode="Server" />
+</head>
+<body>
+    <component type="typeof(App)" render-mode="Server" />
+
+    <!-- Seus scripts globais -->
+    <script src="/assets/libs/@@popperjs/core/umd/popper.min.js"></script>
+    <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/libs/tom-select/js/tom-select.complete.min.js"></script>
+    <script src="/js/javaScriptInterop.js"></script>
+    <script src="/js/resizeInterop.js"></script>
+    <script src="_content/CurrieTechnologies.Razor.SweetAlert2/sweetAlert2.min.js"></script>
+    <script src="_content/FlatpickrBlazor/flatpickr.min.js"></script>
+    <script src="_content/FlatpickrBlazor/flatpickr.blazor.js"></script>
+
+    <!-- Blazor bootstrap (apenas aqui!) -->
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+@using System.Security.Claims
+@using DockQueue.Client.Authentication
+@using DockQueue.Client.Services.UI
+@using DockQueue.Client.Services
+@using WMBlazorOverlayScrollbars.WMBOS
+@using CurrieTechnologies.Razor.SweetAlert2
+
+@inject SweetAlertService Swal
+@inject IJSRuntime JSRuntime
+@inject AuthService AuthService
+@inject AuthenticationStateProvider _authState
+@inject StateService stateService
+@inject NavigationManager navManager
+
+<header class="app-header" id="app-header">
+
+    <!-- Start::main-header-container -->
+    <div class="main-header-container container-fluid">
+
+        <!-- Start::header-content-left - ToggleMenu -->
+        <div class="header-content-left">
+
+            <!-- Start::header-element -->
+            <div class="header-element" @onclick="ToggleMenu">
+
+                <!-- Start::header-link -->
+                <a aria-label="Hide Sidebar" class="sidemenu-toggle header-link animated-arrow hor-toggle horizontal-navtoggle" data-bs-toggle="sidebar" href="javascript:void(0);">
+                    <span></span>
+                </a>
+                <!-- End::header-link -->
+
+            </div>
+            <!-- End::header-element -->
+
+        </div>
+        <!-- End::header-content-left - ToggleMenu -->
+        <!-- Start::header-content-right -->
+        <div class="header-content-right">
+
+            <!-- End::header-element - Tela cheia -->
+            <!-- Start::header-element -->
+            <div class="header-element">
+
+                <!-- Start::header-link|dropdown-toggle -->
+                <a href="javascript:void(0);" class="header-link dropdown-toggle" id="mainHeaderProfile" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <div class="d-flex align-items-center">
+                        <div class="me-sm-2 me-0">
+                            <img src="../assets/images/faces/9.jpg" alt="img" width="32" height="32" class="rounded-circle">
+                        </div>
+                        <div class="d-sm-block d-none">
+                            <p class="fw-semibold mb-0 lh-1">Usuário</p>
+                            <!-- <span class="op-7 fw-normal d-block fs-11">Web Designer</span> -->
+                        </div>
+                    </div>
+                </a>
+                <!-- End::header-link|dropdown-toggle -->
+
+                <ul class="main-header-dropdown dropdown-menu pt-0 overflow-hidden header-profile-dropdown dropdown-menu-end" aria-labelledby="mainHeaderProfile">
+                    <li><a class="dropdown-item d-flex" href="javascript:void(0);" @onclick="Logout"><i class="ti ti-logout fs-18 me-2 op-7"></i>Log Out</a></li>
+                </ul>
+            </div>
+            <!-- End::header-element -->
+            <!-- Start::header-element - Ajustes do site -->
+            <div class="header-element">
+            </div>
+            <!-- End::header-element - Ajustes do site -->
+
+        </div>
+        <!-- End::header-content-right -->
+
+    </div>
+    <!-- End::main-header-container -->
+
+</header>
+
+
+@code
+{
+    public class NotifyList
+    {
+        public int id { get; set; }
+        public string? icon { get; set; }
+        public string? iconBg { get; set; }
+        public string? title { get; set; }
+        public string? description { get; set; }
+    }
+
+
+
+    private async void ToggleMenu()
+    {
+        var toggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
+        var verticalStyle = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-vertical-style");
+        var navStyle = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-style");
+        var isdoubleMenuActive = await JSRuntime.InvokeAsync<bool>("interop.isEleExist", ".double-menu-active");
+        var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
+
+        if (inner <= 992)
+        {
+            if (toggled == "open")
+            {
+                await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close");
+            }
+            else
+            {
+                await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "open");
+            }
+        }
+        else
+        {
+            if (navStyle != null)
+            {
+                if (toggled != null)
+                {
+                    await JSRuntime.InvokeAsync<string>("interop.removeAttributeFromHtml", "data-toggled");
+                }
+                else
+                {
+                    await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", navStyle + "-closed");
+                }
+            }
+            else if (verticalStyle != null)
+            {
+                if (verticalStyle == "doublemenu")
+                {
+                    if (toggled == "double-menu-open" && isdoubleMenuActive)
+                    {
+                        await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-close");
+                    }
+                    else
+                    {
+                        if (isdoubleMenuActive)
+                        {
+                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "double-menu-open");
+                        }
+                    }
+                }
+                else if (toggled != null)
+                {
+                    await JSRuntime.InvokeAsync<string>("interop.removeAttributeFromHtml", "data-toggled");
+                }
+                else
+                {
+                    switch (verticalStyle)
+                    {
+                        case "closed":
+                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "close-menu-close");
+                            break;
+                        case "icontext":
+                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "icon-text-close");
+                            break;
+                        case "overlay":
+                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "icon-overlay-close");
+                            break;
+                        case "detached":
+                            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-toggled", "detached-close");
+                            break;
+                    }
+                }
+            }
+        }
+        stateService.NotifyScreenSizeChanged();
+    }
+
+    private AppState currentState => stateService.GetAppState();
+
+    private async void colorthemeFn()
+    {
+        var val = currentState.ColorTheme == "light" ? "dark" : "light";
+        await JSRuntime.InvokeAsync<string>("interop.setLocalStorageItem", "ynexcolortheme", val);
+        await stateService.colorthemeFn(val, true);
+    }
+    private bool _busy;
+    private async Task Logout()
+    {
+        if (_busy) return;
+        _busy = true;
+
+        await AuthService.LogoutAsync();
+        await Swal.FireAsync("Pronto!", "Logout realizado com sucesso!", "success");
+
+        // Use o MESMO nome que você injetou (navManager)
+        navManager.NavigateTo("/login");
+
+        _busy = false;
+    }
+}

@@ -7,6 +7,7 @@ namespace DockQueue.Api.Controllers
 {
     [ApiController]
     [Route("api/settings")]
+    [Authorize(Policy = "Screen:SettingsView")]
     public class SettingsController : ControllerBase
     {
         private readonly ISystemSettingsService _service;

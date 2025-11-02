@@ -1,54 +1,105 @@
+ï»¿using DockQueue.Application.DTOs;
 using DockQueue.Application.DTOs.Permissions;
 using DockQueue.Application.Interfaces;
 using DockQueue.Domain.Entities;
 using DockQueue.Domain.Interfaces;
 using DockQueue.Domain.Validation;
+using DockQueue.Domain.ValueObjects;
 
 namespace DockQueue.Application.Services
 {
     public class OperatorPermissionsService : IOperatorPermissionsService
     {
-        private readonly IOperatorPermissionsRepository _repo;
-        private readonly IUserRepository _userRepo; // valida se user existe
-        private readonly IStatusRepository _statusRepo; // (opcional) valida ids
-        // Se quiser validar boxes, injete IBoxRepository (se existir)
+        private readonly IOperatorPermissionsRepository _permRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly IStatusRepository _statusRepo;
+        private readonly IBoxRepository _boxRepo;
 
         public OperatorPermissionsService(
-            IOperatorPermissionsRepository repo,
+            IOperatorPermissionsRepository permRepo,
             IUserRepository userRepo,
-            IStatusRepository statusRepo)
+            IStatusRepository statusRepo,
+            IBoxRepository boxRepo)
         {
-            _repo = repo;
+            _permRepo = permRepo;
             _userRepo = userRepo;
             _statusRepo = statusRepo;
+            _boxRepo = boxRepo;
         }
 
-        public async Task<OperatorPermissionsDto?> GetByUserIdAsync(int userId)
+        public async Task<OperatorPermissionsDto?> GetByUserIdAsync(int userId, CancellationToken ct = default)
         {
-            var agg = await _repo.GetByUserIdAsync(userId);
+            var agg = await _permRepo.GetByUserIdAsync(userId, ct);
             return agg is null ? null : Map(agg);
         }
 
-        public async Task<OperatorPermissionsDto> UpsertAsync(int userId, UpdateOperatorPermissionsDto dto)
+        public async Task<OperatorPermissionsDto> UpsertAsync(int userId, UpdateOperatorPermissionsDto dto, CancellationToken ct = default)
         {
-            // --- Valida usuário existente (feedback claro para tela) ---
+            // Garante que o usuÃ¡rio existe (lanÃ§a se nÃ£o existir)
             _ = await _userRepo.GetByIdAsync(userId);
 
-            // (Opcional) Validar se StatusIds existem (ajuda a evitar “lixo”)
-            // var allStatuses = await _statusRepo.GetAllAsync();
-            // var set = allStatuses.Select(s => s.Id).ToHashSet();
-            // if (dto.AllowedStatusIds.Any(id => !set.Contains(id)))
-            //     throw new DomainExceptionValidation("Existem StatusIds inválidos");
-
             var now = DateTime.UtcNow;
-            var incoming = new OperatorPermissions(userId, dto.AllowedScreens, now);
-            incoming.SetStatuses(dto.AllowedStatusIds, now);
-            incoming.SetBoxes(dto.AllowedBoxIds, now);
 
-            var saved = await _repo.UpsertAsync(incoming);
+            var incoming = new OperatorPermissions(userId, dto.AllowedScreens, now);
+            incoming.SetStatuses(dto.AllowedStatusIds, now); // popula AllowedStatuses (entities filho)
+            incoming.SetBoxes(dto.AllowedBoxIds, now);       // popula AllowedBoxes
+
+            var saved = await _permRepo.UpsertAsync(incoming, ct);
             return Map(saved);
         }
 
+        // â†’ usado pela tela para carregar tudo de uma vez
+        public async Task<PermissionsScreenDataDto?> GetScreenDataAsync(int userId, CancellationToken ct = default)
+        {
+            var statuses = await _statusRepo.GetAllAsync(ct);
+            var boxes = await _boxRepo.GetAllAsync(ct);
+            var perms = await _permRepo.GetByUserIdAsync(userId, ct);
+
+            var dto = new PermissionsScreenDataDto
+            {
+                AllStatuses = statuses.Select(s => new StatusDto
+                {
+                    Id = s.Id,
+                    Code = s.Code,
+                    Name = s.Name,
+                    Description = s.Description,
+                    DisplayOrder = s.DisplayOrder,
+                    IsDefault = s.IsDefault,
+                    IsTerminal = s.IsTerminal,
+                    Active = s.Active,
+                    CreatedAt = s.CreatedAt
+                }).ToList(),
+
+                AllBoxes = boxes.Select(b => new BoxDto
+                {
+                    Id = b.Id,
+                    Name = b.Name,
+                    Status = b.Status,     // bool
+                    DriverId = b.DriverId,   // int?
+                    CreatedAt = b.CreatedAt
+                }).ToList(),
+
+                UserPermissions = perms is null
+                      ? new OperatorPermissionsDto
+                      {
+                          UserId = userId,
+                          AllowedStatusIds = new(),
+                          AllowedBoxIds = new(),
+                          AllowedScreens = Screen.None,
+                          UpdatedAt = DateTime.UtcNow
+                      }
+                      : new OperatorPermissionsDto
+                      {
+                          UserId = perms.UserId,
+                          AllowedStatusIds = perms.AllowedStatuses.Select(s => s.StatusId).ToList(),
+                          AllowedBoxIds = perms.AllowedBoxes.Select(b => b.BoxId).ToList(),
+                          AllowedScreens = perms.AllowedScreens,
+                          UpdatedAt = perms.UpdatedAt
+                      }
+            };
+
+            return dto;
+        }
         private static OperatorPermissionsDto Map(OperatorPermissions x) => new()
         {
             UserId = x.UserId,

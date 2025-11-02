@@ -11,7 +11,7 @@ namespace DockQueue.Infra.Data.Repositories
         private readonly ApplicationDbContext _ctx;
         public StatusRepository(ApplicationDbContext ctx) { _ctx = ctx; }
 
-        public async Task<List<Status>> GetAllAsync()
+        public async Task<List<Status>> GetAllAsync(CancellationToken ct = default)
             => await _ctx.Statuses.OrderBy(s => s.DisplayOrder).ThenBy(s => s.Name).ToListAsync();
 
         public async Task<Status?> GetByCodeAsync(string code)
@@ -38,6 +38,13 @@ namespace DockQueue.Infra.Data.Repositories
         {
             return await _ctx.Statuses
                 .AnyAsync(s => s.IsDefault && (!ignoreId.HasValue || s.Id != ignoreId.Value));
+        }
+
+        public async Task DeleteAsync(int id)
+        {
+            var status = await GetByIdAsync(id);
+            _ctx.Statuses.Remove(status);
+            await _ctx.SaveChangesAsync();
         }
     }
 }

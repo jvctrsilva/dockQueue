@@ -1,0 +1,29 @@
+@inherits LayoutComponentBase
+
+@inject NavigationManager _navManager
+
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+        
+        @Body
+
+
+    </ChildContent>
+    <ErrorContent Context="Exception">
+
+        <CustomErrorBoundary OnHandle="@(async () => await Reload())" Error="Exception" />
+
+    </ErrorContent>
+</ErrorBoundary>
+
+@code
+{
+    private ErrorBoundary? _errorBoundary;
+
+    private async Task Reload()
+    {
+        await Task.Yield();
+        _errorBoundary?.Recover();
+        _navManager.NavigateTo("/home", true);
+    }
+}

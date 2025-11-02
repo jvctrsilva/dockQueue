@@ -1,0 +1,132 @@
+﻿@inherits LayoutComponentBase
+
+@inject IJSRuntime JSRuntime
+
+@inject NavigationManager _navManager
+@inject StateService stateService
+
+@using System.Text.Json
+@using DockQueue.Client.Services.UI
+
+<PageTitle>DockQueue</PageTitle>
+
+<ErrorBoundary @ref="_errorBoundary">
+    <ChildContent>
+
+        <div class="page">
+            <MainHeader />
+
+            <NavMenu @ref="navMenuRef" />
+
+            <!-- Start::app-content -->
+            <div class="main-content app-content" id="main-content" @onclick="() => icontextCloseFn()">
+                @Body
+            </div>
+
+            @if (ShowButton)
+            {
+                <!-- Scroll To Top -->
+                <div class="scrollToTop" @onclick="ScrollToTop">
+                    <span class="arrow"><i class="ri-arrow-up-s-fill fs-20"></i></span>
+                </div>
+                <!-- Scroll To Top -->
+            }
+
+        </div>
+
+    </ChildContent>
+    <ErrorContent Context="Exception">
+
+        <CustomErrorBoundary OnHandle="@(async () => await Reload())" Error="Exception" />
+
+    </ErrorContent>
+</ErrorBoundary>
+
+
+
+
+@code
+{
+    private ErrorBoundary? _errorBoundary;
+
+    private async Task Reload()
+    {
+        await Task.Yield();
+        _errorBoundary?.Recover();
+        _navManager.NavigateTo("/home", true);
+    }
+}
+
+@code 
+{
+    protected override async Task OnInitializedAsync()
+    {
+        var currentState = new AppState();
+        var newState = stateService.GetAppState();
+        if (!currentState.Equals(newState)) { }
+        StateHasChanged();
+        await base.OnInitializedAsync();
+    }
+
+    private async void icontextCloseFn()
+    {
+        try
+        {
+            var dataToggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
+            var dataNavLayout = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-layout");
+            var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
+            if (dataToggled == "icon-text-close")
+            {
+                await JSRuntime.InvokeAsync<string>("interop.removeAttributeFromHtml", "data-icon-text");
+            }
+            if (dataNavLayout == "horizontal" && inner >= 992)
+            {
+                navMenuRef?.closeMenuFn();
+            }
+        }
+        catch (Exception)
+        {
+
+        }
+    }
+
+
+    [JSInvokable]
+    public void UpdateScrollVisibility(int scrollHeight)
+    {
+        ShowButton = scrollHeight >= 100;
+        StateHasChanged();
+    }
+
+    NavMenu? navMenuRef;
+    bool ShowButton { get; set; } = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await stateService.retrieveFromLocalStorage();
+                await JSRuntime.InvokeVoidAsync("interop.updateScrollVisibility", DotNetObjectReference.Create(this));
+
+                var dataNavLayout = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-nav-layout");
+                var inner = await JSRuntime.InvokeAsync<int>("interop.inner", "innerWidth");
+
+                if (dataNavLayout == "horizontal" && inner >= 992)
+                {
+                    navMenuRef?.closeMenuFn();
+                }
+            }
+            catch (Exception)
+            {
+
+            }
+        }
+    }
+
+    async Task ScrollToTop()
+    {
+        await JSRuntime.InvokeVoidAsync("interop.scrollToTop");
+    }
+}

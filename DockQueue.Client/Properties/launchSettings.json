@@ -1,0 +1,28 @@
+{
+  "profiles": {
+    "DockQueue": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_HTTPS_PORT": "7301"
+      },
+      "dotnetRunMessages": true,
+      "applicationUrl": "https://localhost:7301;http://localhost:7300"
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:53217/",
+      "sslPort": 44385
+    }
+  }
+}

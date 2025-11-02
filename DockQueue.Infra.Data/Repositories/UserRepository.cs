@@ -27,6 +27,16 @@ namespace DockQueue.Infra.Data.Repositories
             return user;
         }
 
+        public async Task DeleteAsync(int id)
+        {
+            var entity = await _context.Users.FindAsync(id);
+            if (entity is null)
+                throw new DomainExceptionValidation.EntityNotFoundException($"User {id} não encontrado");
+
+            _context.Users.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
+
         public async Task UpdateAsync(User user)
         {
             _context.Users.Update(user);
