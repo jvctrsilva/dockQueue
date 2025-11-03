@@ -1,7 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using DockQueue.Application.DTOs;
 using DockQueue.Application.Interfaces;
+using DockQueue.Domain.Entities;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
 
 namespace DockQueue.Api.Controllers
 {
@@ -26,9 +28,10 @@ namespace DockQueue.Api.Controllers
         // Somente ADMIN pode atualizar
         [HttpPut("operating-schedule")]
         [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "Screen:SettingsEdit")]
         public async Task<IActionResult> UpsertOperatingSchedule([FromBody] UpdateSystemSettingsDto dto)
         {
-            var saved = await _service.UpsertAsync(dto);
+            var saved = await _service.UpsertAsync(dto); // usa o service
             return Ok(saved);
         }
     }

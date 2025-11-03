@@ -15,7 +15,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
-builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>();
 
 builder.Services.AddAuthenticationCore();
 builder.Services.AddAuthorizationCore(options =>
@@ -26,7 +25,6 @@ builder.Services.AddAuthorizationCore(options =>
         options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
     }
 });
-builder.Services.AddAuthenticationCore();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorPages();
 builder.Services.AddTransient<AuthMessageHandler>();
@@ -76,8 +74,10 @@ builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<IPermissionsApi, PermissionsApi>();
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<StatusesService>();
+builder.Services.AddScoped<SystemSettingsApi>();
 
 
+builder.Services.AddScoped<OperatingScheduleViewModel>();
 builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>();
 builder.Services.AddScoped<PermissionEditorViewModel>();
 builder.Services.AddScoped<AuthViewModel>();
@@ -105,7 +105,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
