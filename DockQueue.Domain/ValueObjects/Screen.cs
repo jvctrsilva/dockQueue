@@ -11,8 +11,9 @@ namespace DockQueue.Domain.ValueObjects
 		StatusView = 1 << 3,
 		SettingsView = 1 << 4,
 		PermissionsView = 1 << 5,
+        SettingsEdit = 1 << 6,
 
         // Atalho para “tudo liberado” — útil para ADMIN.
-        All = UsersView | QueueView | BoxesView | StatusView | SettingsView | PermissionsView
+        All = UsersView | QueueView | BoxesView | StatusView | SettingsView | PermissionsView | SettingsEdit
     }
 }

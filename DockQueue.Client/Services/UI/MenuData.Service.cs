@@ -52,9 +52,9 @@ public class MenuDataService
             screenRequired: Screen.UsersView
         ),
         new MainMenuItems(
-            path: "/horario-funcionamento",
+            path: "/settings/operating-schedule",
             type: "link",
-            title: "Funcionamento",
+            title: "Configurações",
             icon: "bx bx-time",
             badgeClass: "bg-info-transparent",
             selected: false,

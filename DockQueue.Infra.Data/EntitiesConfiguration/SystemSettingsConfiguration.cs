@@ -17,12 +17,10 @@ namespace DockQueue.Infra.Data.EntitiesConfiguration
                    .IsRequired();
 
             builder.Property(x => x.StartTime)
-                   .HasColumnType("time")
-                   .IsRequired();
+                   .HasColumnType("time");
 
             builder.Property(x => x.EndTime)
-                   .HasColumnType("time")
-                   .IsRequired();
+                   .HasColumnType("time");
 
             builder.Property(x => x.TimeZone)
                    .HasMaxLength(100)
