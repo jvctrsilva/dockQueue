@@ -1,0 +1,72 @@
+@page "/boxes"
+@using DockQueue.Client.ViewModels
+@using DockQueue.Application.DTOs
+@inject BoxViewModel BoxVM
+@attribute [Authorize(Policy = "Screen:BoxesView")]
+
+<PageTitle>Boxes</PageTitle>
+
+<section class="boxes-page">
+    <div class="login-container">
+        <div class="login-card" style="max-width:720px;width:100%">
+            <div class="login-brand">
+                <div class="login-logo">BX</div>
+                <h1 class="login-title">Gerenciar Box</h1>
+            </div>
+
+            <EditForm Model="BoxVM.Form" OnValidSubmit="AddBox">
+                <DataAnnotationsValidator />
+
+                <div class="login-field">
+                    <label for="name">Nome do Box</label>
+                    <InputText id="name" class="login-input" @bind-Value="BoxVM.Form.Name" />
+                    <ValidationMessage For="() => BoxVM.Form.Name" />
+                </div>
+
+                <button type="submit" class="login-button">Adicionar</button>
+            </EditForm>
+
+            <div style="height:12px"></div>
+
+            <div class="login-field">
+                <label>Boxes</label>
+
+                @if (BoxVM.IsLoading)
+                {
+                    <p>Carregando...</p>
+                }
+                else if (!string.IsNullOrEmpty(BoxVM.ErrorMessage))
+                {
+                    <p style="color:red">@BoxVM.ErrorMessage</p>
+                }
+                else if (BoxVM.Boxes.Count == 0)
+                {
+                    <div class="box-item empty">Nenhum box cadastrado.</div>
+                }
+                else
+                {
+                    @foreach (var item in BoxVM.Boxes)
+                    {
+                        <div class="box-item">
+                            <div class="box-meta">
+                                <div class="box-code">#@item.Id</div>
+                                <div class="box-desc">@item.Name</div>
+                            </div>
+                            <button class="box-remove" @onclick="(() => RemoveBox(item))">Remover</button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await BoxVM.LoadAsync();
+    }
+
+    private async Task AddBox() => await BoxVM.AddBoxAsync();
+    private async Task RemoveBox(BoxDto item) => await BoxVM.RemoveBoxAsync(item);
+}

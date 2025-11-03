@@ -17,7 +17,7 @@ namespace DockQueue.Infra.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "8.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -68,6 +68,88 @@ namespace DockQueue.Infra.Data.Migrations
                     b.ToTable("Driver");
                 });
 
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorBoxPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BoxId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OperatorPermissionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperatorPermissionsId");
+
+                    b.HasIndex("UserId", "BoxId")
+                        .IsUnique();
+
+                    b.ToTable("operator_box_permissions", (string)null);
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorPermissions", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AllowedScreens")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("operator_permissions", (string)null);
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorStatusPermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("OperatorPermissionsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperatorPermissionsId");
+
+                    b.HasIndex("UserId", "StatusId")
+                        .IsUnique();
+
+                    b.ToTable("operator_status_permissions", (string)null);
+                });
+
             modelBuilder.Entity("DockQueue.Domain.Entities.Status", b =>
                 {
                     b.Property<int>("Id")
@@ -111,6 +193,39 @@ namespace DockQueue.Infra.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("statuses", (string)null);
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.SystemSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeOnly?>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<int>("OperatingDays")
+                        .HasColumnType("integer");
+
+                    b.Property<TimeOnly?>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("system_settings", (string)null);
                 });
 
             modelBuilder.Entity("DockQueue.Domain.Entities.User", b =>
@@ -174,6 +289,29 @@ namespace DockQueue.Infra.Data.Migrations
                         .HasForeignKey("DriverId");
 
                     b.Navigation("Driver");
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorBoxPermission", b =>
+                {
+                    b.HasOne("DockQueue.Domain.Entities.OperatorPermissions", null)
+                        .WithMany("AllowedBoxes")
+                        .HasForeignKey("OperatorPermissionsId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorStatusPermission", b =>
+                {
+                    b.HasOne("DockQueue.Domain.Entities.OperatorPermissions", null)
+                        .WithMany("AllowedStatuses")
+                        .HasForeignKey("OperatorPermissionsId")
+                        .OnDelete(DeleteBehavior.Cascade);
+                });
+
+            modelBuilder.Entity("DockQueue.Domain.Entities.OperatorPermissions", b =>
+                {
+                    b.Navigation("AllowedBoxes");
+
+                    b.Navigation("AllowedStatuses");
                 });
 #pragma warning restore 612, 618
         }

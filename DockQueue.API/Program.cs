@@ -1,9 +1,11 @@
-using System.Security.Claims;
-using DockQueue.Infra.Ioc;
-using Microsoft.OpenApi.Models;
 using DockQueue.Domain.Validation;
+using DockQueue.Domain.ValueObjects;
+using DockQueue.Infra.Ioc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,15 +15,12 @@ var builder = WebApplication.CreateBuilder(args);
 // -----------------------
 builder.Services.AddInfrastructure(builder.Configuration);
 
+
 // -----------------------
 // Controllers
 // -----------------------
 builder.Services.AddControllers();
 
-// -----------------------
-// CORS (Blazor / Frontend)
-// Configure no appsettings: "Cors:AllowedOrigins": ["https://localhost:5173", ...]
-// -----------------------
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
 {
@@ -78,7 +77,17 @@ builder.Services
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    foreach (Screen s in Enum.GetValues(typeof(Screen)))
+    {
+        if (s == Screen.None) continue;
+        options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
+    }
+});
+
 
 // -----------------------
 // Swagger centralizado no IoC

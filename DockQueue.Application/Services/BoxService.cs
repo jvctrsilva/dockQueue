@@ -50,7 +50,7 @@ namespace DockQueue.Application.Services
                 createBoxDto.Name,
                 createBoxDto.Status,
                 createBoxDto.DriverId,
-                DateTime.Now
+                DateTime.UtcNow
             );
 
 

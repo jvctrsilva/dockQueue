@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Authorization;
 namespace DockQueue.API.Controllers
 {
     [ApiController]
+    [Authorize(Policy = "Screen:BoxesView")]
     [Route("api/[controller]")]
-    [Authorize]
     public class BoxController : ControllerBase
     {
         private readonly IBoxService _boxService;

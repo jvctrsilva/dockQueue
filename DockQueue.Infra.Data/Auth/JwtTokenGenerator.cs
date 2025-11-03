@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
+
 namespace DockQueue.Infra.Data.Auth
 {
     public class JwtTokenGenerator : ITokenGenerator
@@ -28,26 +29,37 @@ namespace DockQueue.Infra.Data.Auth
             return (key, issuer, audience, accessMinutes, refreshDays);
         }
 
-        public string GenerateAccessToken(string userId, string email, string role)
+        public string GenerateAccessToken(string userId, string email, string role, IDictionary<string, string>? extraClaims = null)
         {
             var (key, issuer, audience, accessMinutes, _) = GetJwtSettings();
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId),
                 new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Email, email), // <- garante que ClaimTypes.Email exista
-                new Claim(ClaimTypes.Role, role),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, role ?? "User"),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var token = new JwtSecurityToken(issuer, audience, claims,
+            if (extraClaims != null)
+            {
+                foreach (var kv in extraClaims)
+                    claims.Add(new Claim(kv.Key, kv.Value));
+            }
+
+            var token = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
+                claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(accessMinutes),
-                signingCredentials: creds);
+                signingCredentials: creds
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
 
         public string GenerateAccessToken(string userId, string email)
         {

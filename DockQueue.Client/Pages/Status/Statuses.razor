@@ -1,0 +1,139 @@
+﻿@page "/status"
+@using DockQueue.Client.ViewModels
+@using DockQueue.Application.DTOs
+@inject StatusListViewModel VM
+@inject NavigationManager Nav
+@inject SweetAlertService Swal
+@attribute [Authorize(Policy = "Screen:StatusView")]
+
+<div class="container-fluid mt-3">
+    <div class="card custom-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-title m-0">Status</div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" @onclick="Reload">Recarregar</button>
+                <button class="btn btn-primary" @onclick="New">Novo</button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(VM.Error))
+            {
+                <div class="alert alert-danger">@VM.Error</div>
+            }
+
+            @if (VM.IsLoading)
+            {
+                <div class="d-flex align-items-center gap-2">
+                    <div class="spinner-border" role="status"></div>
+                    <strong>Carregando...</strong>
+                </div>
+            }
+            else if (VM.Items.Count == 0)
+            {
+                <div class="text-muted">Nenhum status encontrado.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="thead-themed">
+                            <tr>
+                                <th style="width:90px;">#ID</th>
+                                <th style="width:140px;">Código</th>
+                                <th>Nome</th>
+                                <th style="width:120px;">Ordem</th>
+                                <th style="width:140px;">Padrão</th>
+                                <th style="width:140px;">Terminal</th>
+                                <th style="width:140px;">Ativo</th>
+                                <th class="text-end" style="width:220px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in VM.Items.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name))
+                            {
+                                <tr>
+                                    <td>@s.Id</td>
+                                    <td>@s.Code</td>
+                                    <td>@s.Name</td>
+                                    <td>@s.DisplayOrder</td>
+                                    <td>
+                                        @if (s.IsDefault)
+                                        {
+                                            <span class="badge text-bg-success">Sim</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge text-bg-secondary">Não</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (s.IsTerminal)
+                                        {
+                                            <span class="badge text-bg-dark">Sim</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge text-bg-secondary">Não</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (s.Active)
+                                        {
+                                            <span class="badge text-bg-primary">Ativo</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span class="badge text-bg-secondary">Inativo</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => Edit(s.Id)">Editar</button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(s.Id, s.Name)">Excluir</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync() => await VM.LoadAsync();
+
+    private async Task Reload() => await VM.LoadAsync();
+
+    private void New() => Nav.NavigateTo("/status/novo");
+
+    private void Edit(int id) => Nav.NavigateTo($"/status/editar/{id}");
+
+    private async Task Delete(int id, string name)
+    {
+        var r = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "Excluir",
+            Text = $"Confirma excluir o status \"{name}\"?",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sim, excluir",
+            CancelButtonText = "Cancelar"
+        });
+        if (r.IsConfirmed)
+        {
+            await VM.RemoveAsync(id);
+            if (!string.IsNullOrWhiteSpace(VM.Error))
+                await Swal.FireAsync("Erro", VM.Error, "error");
+            else
+                await Swal.FireAsync("OK", "Excluído com sucesso.", "success");
+            StateHasChanged();
+        }
+    }
+}

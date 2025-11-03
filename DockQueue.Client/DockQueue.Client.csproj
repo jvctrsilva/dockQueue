@@ -1,0 +1,51 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UserSecretsId>aspnet-DockQueue-04a5be07-0388-46c7-8f62-ef5a4a9074e5</UserSecretsId>
+		<ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+		<LangVersion>12.0</LangVersion>
+	</PropertyGroup>
+
+		
+	<ItemGroup>
+		<ServiceWorker Include="wwwroot\\service-worker.js" PublishedContent="wwwroot\\service-worker.published.js" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+		<PackageReference Include="Blazor-ApexCharts" Version="5.1.0" />
+		<PackageReference Include="ClosedXML" Version="0.104.2" />
+		<PackageReference Include="CurrieTechnologies.Razor.SweetAlert2" Version="5.6.0" />
+		<PackageReference Include="Dapper" Version="2.1.66" />
+		<PackageReference Include="FlatpickrBlazor" Version="5.0.8" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.3" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.3" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.3">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="MySqlConnector" Version="2.4.0" />
+
+		<PackageReference Include="NoUiSlider.Blazor" Version="0.1.5" />
+		<PackageReference Include="WMBlazorOverlayScrollbars" Version="1.0.0" />
+		<PackageReference Include="WMBlazorSlickCarousel" Version="1.0.1" />
+
+		<PackageReference Include="Soenneker.Blazor.FilePond" Version="3.0.2983" />
+		<PackageReference Include="Soenneker.Blazor.Utils.InteropEventListener" Version="3.0.3439" />
+		<PackageReference Include="Soenneker.Blazor.TomSelect" Version="3.0.3592" />
+
+		<PackageReference Include="System.Drawing.Common" Version="9.0.2" />
+	</ItemGroup>
+	
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\DockQueue\DockQueue.Application\DockQueue.Application.csproj" />
+	  <ProjectReference Include="..\DockQueue.Application\DockQueue.Application.csproj" />
+	</ItemGroup>
+	
+</Project>

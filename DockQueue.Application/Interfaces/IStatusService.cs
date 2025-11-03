@@ -8,5 +8,7 @@ namespace DockQueue.Application.Interfaces
         Task<StatusDto> GetByIdAsync(int id);
         Task<StatusDto> CreateAsync(CreateStatusDto dto);
         Task<StatusDto> UpdateAsync(int id, UpdateStatusDto dto);
+
+        Task DeleteAsync(int id);
     }
 }
