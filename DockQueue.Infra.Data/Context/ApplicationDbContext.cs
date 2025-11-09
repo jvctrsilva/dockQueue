@@ -28,7 +28,7 @@ namespace DockQueue.Infra.Data.Context
     {
         public ApplicationDbContext CreateDbContext(string[] args)
         {
-            var apiPath = Path.Combine(Directory.GetCurrentDirectory(), "../DockQueue.Api");
+            var apiPath = Path.Combine(Directory.GetCurrentDirectory(), "../DockQueue.API");
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(apiPath)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
