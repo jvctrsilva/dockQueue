@@ -1,43 +1,28 @@
 ﻿// Handlers/AuthMessageHandler.cs
 using System.Net.Http.Headers;
-using DockQueue.Client.Services.UI;
-using DockQueue.Application.DTOs;
-using System.Text.Json;
+using DockQueue.Client.ViewModels;
 
 namespace DockQueue.Client.Handlers
 {
     public class AuthMessageHandler : DelegatingHandler
     {
-        private readonly SessionService _sessionService;
-        public AuthMessageHandler(SessionService sessionService) => _sessionService = sessionService;
+        private readonly AuthViewModel _authViewModel;
+
+        public AuthMessageHandler(AuthViewModel authViewModel)
+        {
+            _authViewModel = authViewModel;
+        }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
         {
-            var httpContext = _sessionService.GetHttpContext();
-            var json = httpContext?.Session?.GetString("AuthData");
+            var token = _authViewModel.AccessToken;
 
-            
+            Console.WriteLine($"[AuthHandler] AccessToken no VM length = {token?.Length ?? 0}");
 
-            if (!string.IsNullOrEmpty(json))
+            if (!string.IsNullOrWhiteSpace(token))
             {
-                var auth = JsonSerializer.Deserialize<AuthResponseDto>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                // suporta ambos os nomes, se no futuro você padronizar para AccessToken
-                var token = auth?.Token;
-                if (string.IsNullOrWhiteSpace(token))
-                {
-                    // fallback caso mude o contrato depois
-                    var accessTokenProp = auth?.GetType().GetProperty("AccessToken");
-                    token = accessTokenProp?.GetValue(auth)?.ToString();
-                }
-
-                if (!string.IsNullOrWhiteSpace(token))
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
-            Console.WriteLine($"[AuthHandler] Authorization presente? {request.Headers.Authorization != null}");
 
             return await base.SendAsync(request, ct);
         }

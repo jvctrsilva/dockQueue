@@ -19,6 +19,7 @@ namespace DockQueue.API.Controllers
 
         // GET: api/box
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetAll()
         {
             var boxes = await _boxService.GetAllBoxesAsync();
@@ -27,6 +28,7 @@ namespace DockQueue.API.Controllers
 
         // GET: api/box/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetById(int id)
         {
             var box = await _boxService.GetBoxByIdAsync(id);
@@ -36,6 +38,7 @@ namespace DockQueue.API.Controllers
 
         // POST: api/box
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateBoxDto createBoxDto)
         {
             if (!ModelState.IsValid)
@@ -47,6 +50,7 @@ namespace DockQueue.API.Controllers
 
         // PUT: api/box/{id}
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateBoxDto updateBoxDto)
         {
             if (id != updateBoxDto.Id)
@@ -65,6 +69,7 @@ namespace DockQueue.API.Controllers
 
         // DELETE: api/box/{id}
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _boxService.DeleteBoxAsync(id);

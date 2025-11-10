@@ -17,7 +17,7 @@ namespace DockQueue.Api.Controllers
 
         // Qualquer autenticado pode visualizar
         [HttpGet("operating-schedule")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetOperatingSchedule()
         {
             var s = await _service.GetAsync();

@@ -1,0 +1,107 @@
+@page "/boxes"
+@using DockQueue.Application.DTOs
+@using DockQueue.Client.Services
+@using DockQueue.Client.ViewModels.Box
+@inject BoxListViewModel VM
+@inject NavigationManager Nav
+@inject SweetAlertService Swal
+@attribute [Authorize(Policy = "Screen:BoxesView")]
+
+<PageTitle>Boxes</PageTitle>
+
+<div class="container-fluid mt-3">
+    <div class="card custom-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-title m-0">Box</div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-secondary" @onclick="Reload">Recarregar</button>
+                <button class="btn btn-outline-primary" @onclick="New">Novo</button>
+            </div>
+        </div>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(VM.Error))
+            {
+                <div class="alert alert-danger">@VM.Error</div>
+            }
+
+            @if (VM.IsLoading)
+            {
+                <div class="d-flex align-items-center gap-2">
+                    <div class="spinner-border" role="status"></div>
+                    <strong>Carregando...</strong>
+                </div>
+            }
+            else if (VM.Items.Count == 0)
+            {
+                <div class="text-muted">Nenhum box encontrado.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="thead-themed">
+                            <tr>
+                                <th>Nome</th>
+                                <th>Criado</th>
+                                <th class="text-end" style="width:220px;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in VM.Items.OrderBy(x => x.Name))
+                            {
+                                <tr>
+
+                                    <td>@s.Name</td>
+                                    <td>@s.CreatedAt</td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => Edit(s.Id)">Editar</button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => Delete(s.Id, s.Name)">Excluir</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync() => await VM.LoadAsync();
+
+    private async Task Reload() => await VM.LoadAsync();
+
+    private void New() => Nav.NavigateTo("/boxes/novo");
+
+    private void Edit(int id) => Nav.NavigateTo($"/boxes/editar/{id}");
+
+    private async Task Delete(int id, string name)
+    {
+        var r = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "Excluir",
+            Text = $"Confirma excluir o box \"{name}\"?",
+            Icon = SweetAlertIcon.Warning,
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sim, excluir",
+            CancelButtonText = "Cancelar"
+        });
+
+        if (!r.IsConfirmed)
+            return;
+
+
+        await VM.RemoveAsync(id);
+
+        if (!string.IsNullOrWhiteSpace(VM.Error))
+            await Swal.FireAsync("Erro", VM.Error, "error");
+        else
+            await Swal.FireAsync("OK", "Excluído com sucesso.", "success");
+
+        await InvokeAsync(StateHasChanged);
+    }
+}

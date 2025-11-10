@@ -27,6 +27,8 @@ namespace DockQueue.Infra.Ioc
             services.AddScoped<IStatusRepository, StatusRepository>();
             services.AddScoped<ISystemSettingsRepository, SystemSettingsRepository>();
             services.AddScoped<IOperatorPermissionsRepository, OperatorPermissionsRepository>();
+            services.AddScoped<IDriverRepository, DriverRepository>();
+            services.AddScoped<IQueueEntryRepository, QueueEntryRepository>();
 
             // Services
             services.AddScoped<IUserService, UserService>();
@@ -34,6 +36,8 @@ namespace DockQueue.Infra.Ioc
             services.AddScoped<IStatusService, StatusService>();
             services.AddScoped<ISystemSettingsService, SystemSettingsService>();
             services.AddScoped<IOperatorPermissionsService, OperatorPermissionsService>();
+            services.AddScoped<IQueueService, QueueService>();
+
             // Auth / Tokens
             // Remover o AddScoped<JwtTokenGenerator>();
             // Registrar apenas como ITokenGenerator com lifetime único

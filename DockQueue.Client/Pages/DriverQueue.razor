@@ -1,0 +1,141 @@
+﻿@page "/minha-fila"
+@using DockQueue.Domain.Enums
+@using DockQueue.Client.ViewModels
+@inject DriverQueueViewModel VM
+@inject SweetAlertService Swal
+
+<div class="container-fluid mt-3">
+    <div class="card custom-card">
+        <div class="card-header">
+            <div class="card-title">Minha posição na fila</div>
+        </div>
+        <div class="card-body">
+            <form onsubmit="return false;">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Tipo de operação</label>
+                        <select class="form-select" @bind="VM.Type">
+                            <option value="@QueueType.Unloading">Descarregamento</option>
+                            <option value="@QueueType.Loading">Carregamento</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Nome do motorista</label>
+                        <input class="form-control"
+                               @bind="VM.DriverName"
+                               placeholder="Seu nome" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Documento (CPF)</label>
+                        <input class="form-control"
+                               @bind="VM.DocumentNumber"
+                               placeholder="Somente números" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Placa do veículo</label>
+                        <input class="form-control"
+                               @bind="VM.VehiclePlate"
+                               placeholder="ABC1234" />
+                    </div>
+                </div>
+
+                <div class="mt-3 d-flex gap-2">
+                    <button type="button"
+                            class="btn btn-primary"
+                            @onclick="HandleEnqueue"
+                            disabled="@VM.IsLoading">
+                        Entrar na fila
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            @onclick="HandleCheck"
+                            disabled="@VM.IsLoading">
+                        Consultar posição
+                    </button>
+                </div>
+
+                @if (VM.IsLoading)
+                {
+                    <p class="mt-3">Carregando...</p>
+                }
+
+                @if (!string.IsNullOrEmpty(VM.Error))
+                {
+                    <p class="mt-3 text-danger">@VM.Error</p>
+                }
+
+                @if (!string.IsNullOrEmpty(VM.Info))
+                {
+                    <p class="mt-3 text-success">@VM.Info</p>
+                }
+
+                @if (VM.CurrentEntry is not null)
+                {
+                    <hr />
+                    <h5>Sua situação na fila (@(VM.Type == QueueType.Unloading ? "Descarregamento" : "Carregamento"))</h5>
+
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Posição</th>
+                                <td>@VM.CurrentEntry.Position</td>
+                            </tr>
+                            <tr>
+                                <th>Status</th>
+                                <td>@VM.CurrentEntry.StatusName</td>
+                            </tr>
+                            <tr>
+                                <th>Box</th>
+                                <td>@(VM.CurrentEntry.BoxName ?? "A DEFINIR")</td>
+                            </tr>
+                            <tr>
+                                <th>Data de entrada</th>
+                                <td>@VM.CurrentEntry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@code {
+    private async Task HandleEnqueue()
+    {
+        var ok = await VM.EnqueueAsync();
+
+        if (!string.IsNullOrEmpty(VM.Error))
+        {
+            // se quiser tratar duplicado de forma especial, pode ver o texto aqui
+            await Swal.FireAsync("Atenção", VM.Error, ok ? "warning" : "error");
+        }
+        else if (!string.IsNullOrEmpty(VM.Info))
+        {
+            await Swal.FireAsync("Sucesso", VM.Info, "success");
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task HandleCheck()
+    {
+        var ok = await VM.CheckPositionAsync();
+
+        if (!string.IsNullOrEmpty(VM.Error))
+        {
+            await Swal.FireAsync("Atenção", VM.Error, ok ? "warning" : "error");
+        }
+        else if (!string.IsNullOrEmpty(VM.Info))
+        {
+            await Swal.FireAsync("Sucesso", VM.Info, "success");
+        }
+
+        StateHasChanged();
+    }
+}
+

@@ -17,6 +17,19 @@ public class MenuDataService
             dirChange: false,
             screenRequired:null 
         ),
+
+        new MainMenuItems(
+            path: "/filas",
+            type: "link",
+            title: "Filas",
+            icon: "bx bx-queue",
+            badgeClass: "bg-info-transparent",
+            selected: false,
+            active: false,
+            dirChange: false,
+            roles: null,               // sem filtro por role
+            screenRequired: Screen.QueueView // exige a flag StatusView
+        ),
         new MainMenuItems(
             path: "/status",
             type: "link",
@@ -33,18 +46,19 @@ public class MenuDataService
             path: "/boxes",
             type: "link",
             title: "Box",
-            icon: "bx bx-list-square",
+            icon: "bx bx-box-alt",
             badgeClass: "bg-success-transparent",
             selected: false,
             active: false,
             dirChange: false,
+            roles: null,          
             screenRequired: Screen.BoxesView
         ),
         new MainMenuItems(
             path: "/operadores",
             type: "link",
             title: "Operadores",
-            icon: "bx bx-list-square",
+            icon: "bx bx-user",
             badgeClass: "bg-warning-transparent",
             selected: false,
             active: false,
@@ -55,7 +69,7 @@ public class MenuDataService
             path: "/settings/operating-schedule",
             type: "link",
             title: "Configurações",
-            icon: "bx bx-time",
+            icon: "bx bx-gear",
             badgeClass: "bg-info-transparent",
             selected: false,
             active: false,

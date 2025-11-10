@@ -19,7 +19,7 @@ public sealed class ScreenAuthorizationHandler : AuthorizationHandler<ScreenRequ
         {
             context.Succeed(requirement);
             return Task.CompletedTask;
-        }
+        }   
 
         // Demais usuários: checar claim "screens" (int com flags)
         var raw = context.User.FindFirst("screens")?.Value;

@@ -4,10 +4,11 @@ using DockQueue.Client.Services;
 using DockQueue.Client.Services.UI;
 using DockQueue.Client.Settings;
 using DockQueue.Client.ViewModels;
+using DockQueue.Client.ViewModels.Box;
 using DockQueue.Domain.ValueObjects;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
-
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
+builder.Services.AddScoped<ProtectedLocalStorage>();
+
+builder.Services.AddScoped<JwtAuthenticationStateProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
+    sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
 builder.Services.AddAuthenticationCore();
 builder.Services.AddAuthorizationCore(options =>
@@ -27,8 +33,6 @@ builder.Services.AddAuthorizationCore(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorPages();
-builder.Services.AddTransient<AuthMessageHandler>();
-
 
 builder.Services.AddServerSideBlazor()
     .AddCircuitOptions(option =>
@@ -53,7 +57,6 @@ builder.Services.AddHttpClient("ApiClient", client =>
     client.BaseAddress = new Uri(apiBaseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 })
-    .AddHttpMessageHandler<AuthMessageHandler>()
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
@@ -72,9 +75,8 @@ builder.Services.AddScoped<BoxService>();
 builder.Services.AddScoped<StatusesService>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<IPermissionsApi, PermissionsApi>();
-builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthenticationStateProvider>();
-builder.Services.AddScoped<StatusesService>();
 builder.Services.AddScoped<SystemSettingsApi>();
+builder.Services.AddScoped<QueueService>();
 
 
 builder.Services.AddScoped<OperatingScheduleViewModel>();
@@ -82,12 +84,14 @@ builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>
 builder.Services.AddScoped<PermissionEditorViewModel>();
 builder.Services.AddScoped<AuthViewModel>();
 builder.Services.AddScoped<LoginViewModel>();
-builder.Services.AddScoped<BoxViewModel>();
+builder.Services.AddScoped<BoxEditViewModel>();
+builder.Services.AddScoped<BoxListViewModel>();
 builder.Services.AddScoped<UserViewModel>();
 builder.Services.AddScoped<PermissionEditorViewModel>();
 builder.Services.AddScoped<StatusListViewModel>();
 builder.Services.AddScoped<StatusEditViewModel>();
-
+builder.Services.AddScoped<QueueViewModel>();
+builder.Services.AddScoped<DriverQueueViewModel>();
 
 var app = builder.Build();
 

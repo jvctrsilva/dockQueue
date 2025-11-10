@@ -1,0 +1,224 @@
+﻿@page "/filas"
+@using System.Linq
+@using DockQueue.Domain.Enums
+@using DockQueue.Application.DTOs
+@using DockQueue.Client.ViewModels
+@using DockQueue.Client.Services.UI
+@inject QueueViewModel VM
+@inject SweetAlertService Swal
+
+<PageTitle>Filas</PageTitle>
+
+<div class="mb-3">
+    <ul class="nav nav-pills">
+        <li class="nav-item">
+            <button class="nav-link @(VM.ActiveType == QueueType.Unloading ? "active" : "")"
+                    @onclick="() => ChangeType(QueueType.Unloading)">
+                Descarregamento
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link @(VM.ActiveType == QueueType.Loading ? "active" : "")"
+                    @onclick="() => ChangeType(QueueType.Loading)">
+                Carregamento
+            </button>
+        </li>
+        <button class="btn btn-sm btn-danger ms-3"
+                @onclick="OnClearQueue">
+            Limpar
+        </button>
+    </ul>
+</div>
+
+@if (VM.IsLoading)
+{
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="spinner-border" role="status"></div>
+        <strong>Carregando...</strong>
+    </div>
+}
+else if (!string.IsNullOrEmpty(VM.Error))
+{
+    <div class="alert alert-danger" role="alert">@VM.Error</div>
+}
+else if (VM.Entries.Count == 0)
+{
+    <div class="text-muted">Nenhum motorista na fila atual.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Posição</th>
+                <th>Motorista</th>
+                <th>Documento</th>
+                <th>Placa</th>
+                <th>Status atual</th>
+                <th>Box atual</th>
+                <th>Entrada</th>
+                <th style="width: 120px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in VM.Entries)
+            {
+                <tr>
+                    <td>@entry.Position</td>
+                    <td>@entry.DriverName</td>
+                    <td>@entry.DocumentNumber</td>
+                    <td>@entry.VehiclePlate</td>
+                    <td>@entry.StatusName</td>
+                    <td>@(entry.BoxName ?? "SEM BOX")</td>
+                    <td>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary"
+                                @onclick="() => StartMove(entry)">
+                            Movimentar
+                        </button>
+                    </td>
+                </tr>
+
+                @* Linha extra para movimentação *@
+                @if (movingEntryId == entry.Id)
+                {
+                    <tr class="table-secondary">
+                        <td colspan="8">
+                            <div class="d-flex flex-wrap gap-3 align-items-center">
+                                <div>
+                                    <label class="form-label mb-1">Novo status</label>
+                                    <select class="form-select form-select-sm"
+                                            @bind="movingStatusId">
+                                        @foreach (var status in VM.Statuses)
+                                        {
+                                            <option value="@status.Id">
+                                                @status.Name
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="form-label mb-1">Box</label>
+                                    @if (IsTerminalStatus(movingStatusId))
+                                    {
+                                        <select class="form-select form-select-sm"
+                                                @bind="movingBoxId">
+                                            @foreach (var box in VM.Boxes)
+                                            {
+                                                <option value="@box.Id">
+                                                    @box.Name
+                                                </option>
+                                            }
+                                        </select>
+                                    }
+                                </div>
+
+                                <div class="mt-3 mt-md-0 d-flex gap-2">
+                                    <button class="btn btn-sm btn-success"
+                                            @onclick="ConfirmMove">
+                                        Confirmar movimentação
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            @onclick="CancelMove">
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private int? movingEntryId;
+    private int movingStatusId;
+    private int? movingBoxId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VM.InitAsync();
+    }
+
+    private async Task ChangeType(QueueType type)
+    {
+        await VM.ChangeTypeAsync(type);
+        CancelMove(); // limpa movimentação ao trocar de aba
+        StateHasChanged();
+    }
+
+    private void StartMove(QueueEntryViewDto entry)
+    {
+        movingEntryId = entry.Id;
+        movingStatusId = entry.StatusId;
+        movingBoxId = entry.BoxId;
+    }
+
+    private void CancelMove()
+    {
+        movingEntryId = null;
+        movingStatusId = 0;
+        movingBoxId = null;
+    }
+
+    private async Task ConfirmMove()
+    {
+        if (movingEntryId is null)
+            return;
+
+        // 1) Atualiza status
+        await VM.UpdateStatusAsync(movingEntryId.Value, movingStatusId);
+
+        // 2) Se o novo status for terminal e tiver box selecionado, atribui o box
+        if (IsTerminalStatus(movingStatusId) && movingBoxId.HasValue)
+        {
+            await VM.AssignBoxAsync(movingEntryId.Value, movingBoxId.Value);
+        }
+
+        // Recarrega a fila atual para refletir mudanças
+        await VM.ChangeTypeAsync(VM.ActiveType);
+
+        CancelMove();
+        StateHasChanged();
+    }
+
+
+    private bool IsTerminalStatus(int statusId)
+    {
+        var status = VM.Statuses.FirstOrDefault(s => s.Id == statusId);
+        return status?.IsTerminal ?? false;
+    }
+
+    private async Task OnClearQueue()
+    {
+        var result = await Swal.FireAsync(new SweetAlertOptions
+        {
+            Title = "Limpar fila",
+            Text = "Tem certeza que deseja limpar a fila atual?",
+            Icon = "warning",
+            ShowCancelButton = true,
+            ConfirmButtonText = "Sim, limpar",
+            CancelButtonText = "Cancelar"
+        });
+
+        if (result.IsConfirmed)
+        {
+            await VM.ClearCurrentQueueAsync();
+
+            if (string.IsNullOrEmpty(VM.Error))
+            {
+                await Swal.FireAsync("Sucesso", "Fila limpa com sucesso.", "success");
+            }
+            else
+            {
+                await Swal.FireAsync("Erro", VM.Error, "error");
+            }
+
+            StateHasChanged();
+        }
+    }
+
+}
