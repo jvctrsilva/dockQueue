@@ -46,5 +46,12 @@ namespace DockQueue.Infra.Data.Repositories
             _ctx.Statuses.Remove(status);
             await _ctx.SaveChangesAsync();
         }
+        public async Task<Status?> GetFirstBySequenceAsync()
+        {
+            // Ajuste "Sequence" para o nome exato da sua coluna/propriedade (Sequencia, Order, etc.)
+            return await _ctx.Statuses
+                .OrderBy(s => s.DisplayOrder)
+                .FirstOrDefaultAsync();
+        }
     }
 }

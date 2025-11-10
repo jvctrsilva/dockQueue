@@ -18,24 +18,41 @@
     public EventCallback OnHandle { get; set; }
 
     [Parameter]
-    public Exception Error { get; set; }
+    public Exception? Error { get; set; }
 
     [CascadingParameter]
-    private Task<AuthenticationState> _authState { get; set; }
+    private Task<AuthenticationState>? _authState { get; set; }
+
+    private string? _errorMessage;
+    private string? _stackTrace;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var user = await _authState;
-            await HandleErrorAsync(Error, user.User);
+            if (Error != null && _authState != null)
+            {
+                var auth = await _authState;
+                await HandleErrorAsync(Error, auth.User);
+            }
+
+            if (Error != null)
+            {
+                _errorMessage = Error.Message;
+                _stackTrace = Error.StackTrace;
+            }
         }
-        catch (Exception) { }
+        catch (Exception)
+        {
+            // Se der erro aqui, não queremos quebrar a tela de erro também
+        }
     }
 
-    private async Task HandleErrorAsync(Exception ex, System.Security.Claims.ClaimsPrincipal user)
+    private Task HandleErrorAsync(Exception ex, System.Security.Claims.ClaimsPrincipal user)
     {
-        //await LogService.LogAsync(ex, user);
+        // Aqui futuramente você pode chamar um LogService / enviar pro server, etc.
+        // return LogService.LogAsync(ex, user);
+        return Task.CompletedTask;
     }
 
     private void Voltar()
@@ -43,6 +60,7 @@
         OnHandle.InvokeAsync();
     }
 }
+
 
 <style>
     /* Start:: error */

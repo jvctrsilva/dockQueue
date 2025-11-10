@@ -67,8 +67,17 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		await LoadAsync();
+		try
+		{
+			await LoadAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			// se a API disse 401, manda pro login
+			Nav.NavigateTo("/login", true);
+		}
 	}
+
 
 	private async Task LoadAsync()
 	{

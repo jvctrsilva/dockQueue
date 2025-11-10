@@ -1,16 +1,28 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using DockQueue.Client.Shared;
+﻿using DockQueue.Client.Shared;
+using DockQueue.Client.ViewModels;
+using System.Net.Http.Headers;
 
 namespace DockQueue.Client.Services
 {
     public class SystemSettingsApi
     {
-        private readonly HttpClient _http;
-        public SystemSettingsApi(IHttpClientFactory f) => _http = f.CreateClient("ApiClient");
+        private readonly HttpClient _httpClient;
+        private readonly AuthViewModel _auth;
+        public SystemSettingsApi(IHttpClientFactory httpClientFactory, AuthViewModel auth)
+        {
+            _httpClient = httpClientFactory.CreateClient("ApiClient");
+            _auth = auth;
+        }
 
-        // DTO "wire" que bate com a API (strings)
+        private void AttachAuthHeader()
+        {
+            var token = _auth.AccessToken;
+            if (!string.IsNullOrWhiteSpace(token))
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            else
+                _httpClient.DefaultRequestHeaders.Authorization = null;
+        }
         private sealed class WireDto
         {
             public OperatingDays OperatingDays { get; set; }
@@ -23,7 +35,8 @@ namespace DockQueue.Client.Services
 
         public async Task<SettingsDto?> GetAsync()
         {
-            var resp = await _http.GetAsync("api/settings/operating-schedule");
+            AttachAuthHeader();
+            var resp = await _httpClient.GetAsync("api/settings/operating-schedule");
             if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
             resp.EnsureSuccessStatusCode();
 
@@ -43,6 +56,7 @@ namespace DockQueue.Client.Services
 
         public async Task<SettingsDto> UpsertAsync(UpdateSettingsDto dto)
         {
+            AttachAuthHeader();
             var payload = new
             {
                 dto.OperatingDays,
@@ -51,7 +65,7 @@ namespace DockQueue.Client.Services
                 dto.TimeZone
             };
 
-            var resp = await _http.PutAsJsonAsync("api/settings/operating-schedule", payload);
+            var resp = await _httpClient.PutAsJsonAsync("api/settings/operating-schedule", payload);
             resp.EnsureSuccessStatusCode();
 
             var w = await resp.Content.ReadFromJsonAsync<WireDto>();
@@ -65,6 +79,62 @@ namespace DockQueue.Client.Services
                 CreatedAt = w.CreatedAt,
                 UpdatedAt = w.UpdatedAt
             };
+        }
+
+
+        /// Verifica se o horário atual está dentro do horário de funcionamento
+        /// configurado no banco (dias + faixa de horário).
+        public async Task<bool> IsOpenNowAsync(DateTime? now = null)
+        {
+            AttachAuthHeader();
+            var settings = await GetAsync();
+            if (settings is null)
+            {
+                // Se não houver configuração, você decide:
+                // true = não bloquear, false = sempre bloquear
+                return true;
+            }
+
+            var referenceTime = now ?? DateTime.Now;
+
+            // 1) Verifica se hoje é um dia operacional
+            var today = referenceTime.DayOfWeek;
+            var todayFlag = today switch
+            {
+                DayOfWeek.Sunday => OperatingDays.Sunday,
+                DayOfWeek.Monday => OperatingDays.Monday,
+                DayOfWeek.Tuesday => OperatingDays.Tuesday,
+                DayOfWeek.Wednesday => OperatingDays.Wednesday,
+                DayOfWeek.Thursday => OperatingDays.Thursday,
+                DayOfWeek.Friday => OperatingDays.Friday,
+                DayOfWeek.Saturday => OperatingDays.Saturday,
+                _ => OperatingDays.None
+            };
+
+            var openToday = (settings.OperatingDays & todayFlag) != 0;
+            if (!openToday)
+                return false;
+
+            // 2) Verifica faixa de horário (StartTime / EndTime no formato "HH:mm")
+            if (string.IsNullOrWhiteSpace(settings.StartTime) ||
+                string.IsNullOrWhiteSpace(settings.EndTime))
+            {
+                // Se não tiver horário definido, você pode decidir:
+                // true = considera aberto o dia todo, false = considera fechado
+                return false;
+            }
+
+            if (!TimeSpan.TryParse(settings.StartTime, out var start) ||
+                !TimeSpan.TryParse(settings.EndTime, out var end))
+            {
+                // Se as configs estiverem zoadas, por segurança bloqueia
+                return false;
+            }
+
+            var time = referenceTime.TimeOfDay;
+
+            // Simples: não estamos tratando janela que passa da meia-noite.
+            return time >= start && time <= end;
         }
 
     }

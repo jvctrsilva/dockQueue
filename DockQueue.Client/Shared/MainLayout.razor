@@ -1,13 +1,14 @@
 ﻿@inherits LayoutComponentBase
 
-@inject IJSRuntime JSRuntime
 
+@inject IJSRuntime JSRuntime
+@inject AuthService AuthService
 @inject NavigationManager _navManager
 @inject StateService stateService
 
 @using System.Text.Json
+@using DockQueue.Client.Services
 @using DockQueue.Client.Services.UI
-
 <PageTitle>DockQueue</PageTitle>
 
 <ErrorBoundary @ref="_errorBoundary">
@@ -33,7 +34,13 @@
             }
 
         </div>
+    <AuthorizeView>
+       <NotAuthorized>
+           <RedirectToLogin>
 
+           </RedirectToLogin>
+       </NotAuthorized>
+    </AuthorizeView>
     </ChildContent>
     <ErrorContent Context="Exception">
 
@@ -59,14 +66,6 @@
 
 @code 
 {
-    protected override async Task OnInitializedAsync()
-    {
-        var currentState = new AppState();
-        var newState = stateService.GetAppState();
-        if (!currentState.Equals(newState)) { }
-        StateHasChanged();
-        await base.OnInitializedAsync();
-    }
 
     private async void icontextCloseFn()
     {

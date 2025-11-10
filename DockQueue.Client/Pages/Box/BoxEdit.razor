@@ -1,0 +1,73 @@
+﻿@page "/boxes/novo"
+@page "/boxes/editar/{id:int}"
+@using DockQueue.Client.ViewModels.Box
+@inject BoxEditViewModel VM
+@inject NavigationManager Nav
+@inject SweetAlertService Swal
+@attribute [Authorize(Policy = "Screen:BoxesView")]
+
+<h3 class="mb-3">
+    @(id == null ? "Novo Box" : $"Editar Box #{id}")
+</h3>
+
+@if (VM.IsLoading)
+{
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="spinner-border" role="status"></div>
+        <strong>Carregando...</strong>
+    </div>
+}
+@if (!string.IsNullOrWhiteSpace(VM.Error))
+{
+    <div class="alert alert-danger">@VM.Error</div>
+}
+
+<EditForm Model="VM.Model" OnValidSubmit="Save">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="card">
+        <div class="card-body row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Nome</label>
+                <InputText class="form-control" @bind-Value="VM.Model.Name" />
+                <ValidationMessage For="() => VM.Model.Name" />
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button class="btn btn-primary" type="submit" disabled="@VM.IsSaving">
+                @if (VM.IsSaving)
+                {
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                }
+                Salvar
+            </button>
+            <button class="btn btn-outline-secondary" type="button" @onclick="Back">Voltar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int? id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await VM.LoadAsync(id);
+    }
+
+    private async Task Save()
+    {
+        if (await VM.SaveAsync())
+        {
+            await Swal.FireAsync("Sucesso", "Registro salvo.", "success");
+            Nav.NavigateTo("/boxes"); // redireciona à lista
+        }
+        else
+        {
+            await Swal.FireAsync("Erro", VM.Error ?? "Falha ao salvar.", "error");
+        }
+    }
+
+    private void Back() => Nav.NavigateTo("/boxes");
+}
