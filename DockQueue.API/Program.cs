@@ -3,6 +3,7 @@ using DockQueue.Domain.ValueObjects;
 using DockQueue.Infra.Ioc;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
@@ -11,8 +12,9 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 // -----------------------
-// IoC
+// Config & IoC
 // -----------------------
+builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 
@@ -55,7 +57,7 @@ builder.Services
     .AddJwtBearer(options =>
     {
         // Em DEV você pode desligar para testes em http
-        options.RequireHttpsMetadata = true;
+        options.RequireHttpsMetadata = false;
         options.SaveToken = true;
 
         options.TokenValidationParameters = new TokenValidationParameters
@@ -101,6 +103,15 @@ var app = builder.Build();
 // -----------------------
 // Pipeline
 // -----------------------
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+app.UseHttpsRedirection();
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -135,5 +146,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/health", () => Results.Ok("ok"));
 
 app.Run();
