@@ -1,0 +1,13 @@
+# Dockerfile.frontend (NET 9)
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+WORKDIR /DockQueue
+COPY . .
+RUN dotnet restore DockQueue.Client/DockQueue.Client.csproj
+RUN dotnet publish DockQueue.Client/DockQueue.Client.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:9.0
+WORKDIR /app
+COPY --from=build /app ./
+ENV ASPNETCORE_URLS=http://+:8082
+EXPOSE 8082
+ENTRYPOINT ["dotnet","DockQueue.Client.dll"]
