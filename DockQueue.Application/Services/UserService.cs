@@ -1,5 +1,4 @@
 ﻿using System.Security.Claims;
-using System.Linq;
 using DockQueue.Application.DTOs;
 using DockQueue.Application.Interfaces;
 using DockQueue.Domain.Entities;
@@ -78,6 +77,15 @@ namespace DockQueue.Application.Services
             return true;
         }
 
+        public async Task UpdateUserAsync(int id, UpdateUserDto user)
+        {
+            var u = await _repo.GetByIdAsync(id);
+            u.Name = user.Name;
+            u.Number = user.Number;
+            u.Role = user.Role;
+
+            await _repo.UpdateAsync(u);
+        }
         public async Task DeleteUserAsync(int id)
         {
             await _repo.DeleteAsync(id);

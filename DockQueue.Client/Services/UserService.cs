@@ -40,6 +40,16 @@ public class UserService
         return users ?? new List<UserDto>();
     }
 
+    public async Task<UserDto?> GetByIdAsync(int id)
+    {
+        AttachAuthHeader();
+        var response = await _httpClient.GetAsync($"/api/users/{id}");
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return null;
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<UserDto>();
+    }
+
     public async Task<UserDto?> CreateAsync(CreateUserDto dto)
     {
         AttachAuthHeader();
@@ -50,6 +60,12 @@ public class UserService
         return await response.Content.ReadFromJsonAsync<UserDto>();
     }
 
+    public async Task<bool> UpdateAsync(int id, UpdateUserDto dto)
+    {
+        AttachAuthHeader();
+        var response = await _httpClient.PutAsJsonAsync($"/api/users/{id}", dto);
+        return response.IsSuccessStatusCode;
+    }
     public async Task<bool> DeleteAsync(int id)
     {
         AttachAuthHeader();

@@ -1,6 +1,5 @@
 ﻿using DockQueue.Application.DTOs;
 using DockQueue.Application.Interfaces;
-using DockQueue.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,6 +30,13 @@ namespace DockQueue.Api.Controllers
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null) return NotFound();
             return Ok(user);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(int id, UpdateUserDto updateUserDto)
+        {
+            await _userService.UpdateUserAsync(id, updateUserDto);
+            return NoContent();
         }
 
         [HttpPost]

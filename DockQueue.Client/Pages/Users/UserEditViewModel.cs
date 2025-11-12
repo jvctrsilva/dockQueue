@@ -1,20 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations;
-using DockQueue.Application.DTOs;
+﻿using DockQueue.Application.DTOs;
+using DockQueue.Client.Services;
 
-namespace DockQueue.Client.ViewModels.Box;
-
-public class BoxEditViewModel
+namespace DockQueue.Client.Pages.Users;
+public class UserEditViewModel
 {
-    private readonly BoxService _service;
-    public BoxEditViewModel(BoxService service) => _service = service;
+    private readonly UserService _service;
+    public UserEditViewModel(UserService service) => _service = service;
     public bool IsLoading { get; private set; }
     public bool IsSaving { get; private set; }
     public string? Error { get; private set; }
-
-    // id nulo => criando
     public int? Id { get; private set; }
-
-    // Form model (espelha Create/Update DTOs)
     public FormModel Model { get; private set; } = new();
 
     public async Task LoadAsync(int? id)
@@ -25,20 +20,23 @@ public class BoxEditViewModel
             Error = null;
             Id = id;
 
-            if (id is null) // novo
+            if (id is null) 
             {
-                Model = new FormModel(); // defaults
+                Model = new FormModel();
             }
             else
             {
                 var dto = await _service.GetByIdAsync(id.Value);
-                if (dto == null) throw new InvalidOperationException("Box não encontrado.");
+                if (dto == null) throw new InvalidOperationException("Usuário não encontrado.");
                 Model = new FormModel
                 {
+                    Id = dto.Id,
                     Name = dto.Name,
-                    Status = dto.Status,
-                    DriverId = dto.DriverId,
-};
+                    Number = dto.Number,
+                    Email = dto.Email,
+                    Role = dto.Role,
+                    CreatedAt = dto.CreatedAt
+                };
             }
         }
         catch (Exception ex)
@@ -57,20 +55,23 @@ public class BoxEditViewModel
 
             if (Id is null)
             {
-                var create = new CreateBoxDto
+                var create = new CreateUserDto
                 {
                     Name = Model.Name.Trim(),
+                    Number = Model.Number.Trim(),
+                    Email = Model.Email.Trim(),
+                    Password = "Default",
+                    Role = Model.Role.Trim()
                 };
                 await _service.CreateAsync(create);
             }
             else
             {
-                var update = new UpdateBoxDto
+                var update = new UpdateUserDto
                 {
-                    Id = Id.Value,
                     Name = Model.Name.Trim(),
-                    Status = Model.Status,
-                    DriverId = Model.DriverId,
+                    Number = Model.Number.Trim(),
+                    Role = Model.Role.Trim()
                 };
                 await _service.UpdateAsync(Id.Value, update);
             }
@@ -86,9 +87,11 @@ public class BoxEditViewModel
 
     public class FormModel
     {
-        [Required, MinLength(2)]
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public bool Status { get; set; } = false; // default
-        public int? DriverId { get; set; } = null; // default
+        public string Number { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
     }
 }
