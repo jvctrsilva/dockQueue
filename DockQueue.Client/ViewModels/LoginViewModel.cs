@@ -27,8 +27,8 @@ public class LoginViewModel : INotifyPropertyChanged
         }
     }
 
-    [Required(ErrorMessage = "Senha é obrigatória")]
-    [MinLength(4, ErrorMessage = "Senha deve ter pelo menos 6 caracteres")]
+    // Senha é opcional para permitir primeiro login sem senha
+    // A validação será feita no backend
     public string Password
     {
         get => _password;

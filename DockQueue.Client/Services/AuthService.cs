@@ -18,7 +18,7 @@ public class AuthService
         _authProvider = authProvider;
     }
 
-    public async Task<bool> LoginAsync(LoginViewModel loginViewModel)
+    public async Task<AuthResponseDto?> LoginAsync(LoginViewModel loginViewModel)
     {
         try
         {
@@ -31,7 +31,7 @@ public class AuthService
             if (!response.IsSuccessStatusCode)
             {
                 loginViewModel.SetError("Email ou senha inválidos");
-                return false;
+                return null;
             }
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -41,7 +41,7 @@ public class AuthService
             if (authResponse is null || string.IsNullOrWhiteSpace(authResponse.Token))
             {
                 loginViewModel.SetError("Resposta de autenticação inválida.");
-                return false;
+                return null;
             }
 
             Console.WriteLine($"[AuthService] Token recebido com {authResponse.Token.Length} caracteres");
@@ -49,12 +49,12 @@ public class AuthService
             // Salva em localStorage + atualiza AuthViewModel + notifica Blazor
             await _authProvider.SetAuthDataAsync(authResponse);
 
-            return true;
+            return authResponse;
         }
         catch (Exception ex)
         {
             loginViewModel.SetError($"Erro ao fazer login: {ex.Message}");
-            return false;
+            return null;
         }
     }
 

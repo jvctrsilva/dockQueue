@@ -16,4 +16,9 @@ namespace DockQueue.Application.DTOs
         public string Number { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
     }
+
+    public class UpdatePasswordDto
+    {
+        public string NewPassword { get; set; } = string.Empty;
+    }
 }

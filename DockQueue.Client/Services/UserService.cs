@@ -30,7 +30,7 @@ public class UserService
 
         var response = await _httpClient.GetAsync("/api/users");
 
-        // se n„o autorizado, deixa o chamador decidir o que fazer (ex.: redirecionar pro login)
+        // se n√£o autorizado, deixa o chamador decidir o que fazer (ex.: redirecionar pro login)
         if (response.StatusCode == HttpStatusCode.Unauthorized)
             throw new UnauthorizedAccessException("API retornou 401 para /api/users.");
 
@@ -70,6 +70,13 @@ public class UserService
     {
         AttachAuthHeader();
         var response = await _httpClient.DeleteAsync($"/api/users/{id}");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> UpdatePasswordAsync(int id, UpdatePasswordDto dto)
+    {
+        AttachAuthHeader();
+        var response = await _httpClient.PutAsJsonAsync($"/api/users/{id}/password", dto);
         return response.IsSuccessStatusCode;
     }
 }

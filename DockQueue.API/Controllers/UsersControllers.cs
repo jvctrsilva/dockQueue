@@ -1,7 +1,9 @@
 ﻿using DockQueue.Application.DTOs;
 using DockQueue.Application.Interfaces;
+using DockQueue.Domain.Validation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace DockQueue.Api.Controllers
 {
@@ -51,6 +53,43 @@ namespace DockQueue.Api.Controllers
         {
             await _userService.DeleteUserAsync(id);
             return NoContent();
+        }
+
+        [HttpPut("{id}/password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdatePassword(int id, [FromBody] UpdatePasswordDto dto)
+        {
+            try
+            {
+                if (User.Identity?.IsAuthenticated != true)
+                {
+                    return Unauthorized("Usuário não autenticado.");
+                }
+
+                // Verifica se o usuário está atualizando sua própria senha
+                var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "uid") 
+                               ?? User.Claims.FirstOrDefault(c => c.Type == "sub")
+                               ?? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+                
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out var userId))
+                {
+                    if (userId != id)
+                    {
+                        return Forbid("Você só pode atualizar sua própria senha.");
+                    }
+                }
+                else
+                {
+                    return Unauthorized("ID do usuário não encontrado no token.");
+                }
+
+                await _userService.UpdatePasswordAsync(id, dto);
+                return NoContent();
+            }
+            catch (DomainExceptionValidation ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

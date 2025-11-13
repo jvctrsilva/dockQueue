@@ -60,7 +60,7 @@ public class UserEditViewModel
                     Name = Model.Name.Trim(),
                     Number = Model.Number.Trim(),
                     Email = Model.Email.Trim(),
-                    Password = "Default",
+                    Password = null, // Senha será gerada no primeiro login
                     Role = Model.Role.Trim()
                 };
                 await _service.CreateAsync(create);
