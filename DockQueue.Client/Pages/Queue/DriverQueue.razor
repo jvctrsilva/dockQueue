@@ -1,8 +1,10 @@
 ﻿@page "/minha-fila"
 @using DockQueue.Domain.Enums
 @using DockQueue.Client.ViewModels
+@layout EmptyLayout
 @inject DriverQueueViewModel VM
 @inject SweetAlertService Swal
+@inject IJSRuntime JSRuntime
 
 <div class="container-fluid mt-3">
     <div class="card custom-card">
@@ -10,108 +12,161 @@
             <div class="card-title">Minha posição na fila</div>
         </div>
         <div class="card-body">
-            <form onsubmit="return false;">
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Tipo de operação</label>
-                        <select class="form-select" @bind="VM.Type">
-                            <option value="@QueueType.Unloading">Descarregamento</option>
-                            <option value="@QueueType.Loading">Carregamento</option>
-                        </select>
+            @if (VM.IsAutoChecking)
+            {
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <div class="spinner-border" role="status"></div>
+                    <strong>Verificando sua posição...</strong>
+                </div>
+            }
+
+            @if (!string.IsNullOrEmpty(VM.Error))
+            {
+                <div class="alert alert-danger" role="alert">@VM.Error</div>
+            }
+
+            @if (!string.IsNullOrEmpty(VM.Info) && string.IsNullOrEmpty(VM.Error))
+            {
+                <div class="alert alert-info" role="alert">@VM.Info</div>
+            }
+
+            @if (VM.CurrentEntry is null)
+            {
+                <form onsubmit="return false;">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Tipo de operação</label>
+                            <select class="form-select" @bind="VM.Type" @bind:after="OnTypeChanged">
+                                <option value="@QueueType.Unloading">Descarregamento</option>
+                                <option value="@QueueType.Loading">Carregamento</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Nome do motorista</label>
+                            <input class="form-control"
+                                   type="text"
+                                   @bind="VM.DriverName"
+                                   placeholder="Seu nome"
+                                   disabled="@VM.IsLoading" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Documento (CPF)</label>
+                            <input class="form-control"
+                                   type="text"
+                                   @bind="VM.DocumentNumber"
+                                   placeholder="Somente números"
+                                   disabled="@VM.IsLoading" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Placa do veículo</label>
+                            <input class="form-control"
+                                   type="text"
+                                   @bind="VM.VehiclePlate"
+                                   placeholder="ABC1234"
+                                   style="text-transform: uppercase"
+                                   disabled="@VM.IsLoading" />
+                        </div>
+                    </div>
+
+                    <div class="mt-3 d-flex gap-2">
+                        <button type="button"
+                                class="btn btn-primary"
+                                @onclick="HandleEnqueue"
+                                disabled="@(VM.IsLoading || VM.IsAutoChecking)">
+                            @if (VM.IsLoading && !VM.IsAutoChecking)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            Entrar na fila
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-secondary"
+                                @onclick="HandleCheck"
+                                disabled="@(VM.IsLoading || VM.IsAutoChecking)">
+                            @if (VM.IsLoading && !VM.IsAutoChecking)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            }
+                            Consultar posição
+                        </button>
+                    </div>
+                </form>
+            }
+
+            @if (VM.CurrentEntry is not null)
+            {
+                <hr class="my-4" />
+                <h5 class="mb-3">Sua situação na fila (@(VM.Type == QueueType.Unloading ? "Descarregamento" : "Carregamento"))</h5>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-12 text-center">
+                                <span class="badge bg-primary fs-5 px-4 py-2">Posição #@VM.CurrentEntry.Position</span>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <tbody>
+                                <tr>
+                                    <th style="width: 150px;">Motorista</th>
+                                    <td>@VM.CurrentEntry.DriverName</td>
+                                </tr>
+                                <tr>
+                                    <th>Status</th>
+                                    <td>@VM.CurrentEntry.StatusName</td>
+                                </tr>
+                                <tr>
+                                    <th>Box</th>
+                                    <td>@(VM.CurrentEntry.BoxName ?? "A DEFINIR")</td>
+                                </tr>
+                                <tr>
+                                    <th>Data de entrada</th>
+                                    <td>@VM.CurrentEntry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        @if (VM.CurrentEntry.BoxInOperation == true)
+                        {
+                            <div class="alert alert-info mb-0 mt-3">
+                                <strong>Operação em andamento no box</strong>
+                            </div>
+                        }
                     </div>
                 </div>
-
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Nome do motorista</label>
-                        <input class="form-control"
-                               @bind="VM.DriverName"
-                               placeholder="Seu nome" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Documento (CPF)</label>
-                        <input class="form-control"
-                               @bind="VM.DocumentNumber"
-                               placeholder="Somente números" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Placa do veículo</label>
-                        <input class="form-control"
-                               @bind="VM.VehiclePlate"
-                               placeholder="ABC1234" />
-                    </div>
-                </div>
-
-                <div class="mt-3 d-flex gap-2">
-                    <button type="button"
-                            class="btn btn-primary"
-                            @onclick="HandleEnqueue"
-                            disabled="@VM.IsLoading">
-                        Entrar na fila
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            @onclick="HandleCheck"
-                            disabled="@VM.IsLoading">
-                        Consultar posição
-                    </button>
-                </div>
-
-                @if (VM.IsLoading)
-                {
-                    <p class="mt-3">Carregando...</p>
-                }
-
-                @if (!string.IsNullOrEmpty(VM.Error))
-                {
-                    <p class="mt-3 text-danger">@VM.Error</p>
-                }
-
-                @if (!string.IsNullOrEmpty(VM.Info))
-                {
-                    <p class="mt-3 text-success">@VM.Info</p>
-                }
-
-                @if (VM.CurrentEntry is not null)
-                {
-                    <hr />
-                    <h5>Sua situação na fila (@(VM.Type == QueueType.Unloading ? "Descarregamento" : "Carregamento"))</h5>
-
-                    <table class="table">
-                        <tbody>
-                            <tr>
-                                <th>Posição</th>
-                                <td>@VM.CurrentEntry.Position</td>
-                            </tr>
-                            <tr>
-                                <th>Status</th>
-                                <td>@VM.CurrentEntry.StatusName</td>
-                            </tr>
-                            <tr>
-                                <th>Box</th>
-                                <td>@(VM.CurrentEntry.BoxName ?? "A DEFINIR")</td>
-                            </tr>
-                            <tr>
-                                <th>Data de entrada</th>
-                                <td>@VM.CurrentEntry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                }
-            </form>
+            }
         </div>
     </div>
 </div>
 
 @code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Verifica automaticamente ao carregar a página
+        await VM.AutoCheckAsync();
+        StateHasChanged();
+    }
+
+    private void OnTypeChanged()
+    {
+        _ = Task.Run(async () =>
+        {
+            await VM.AutoCheckAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
     private async Task HandleEnqueue()
     {
         var ok = await VM.EnqueueAsync();
 
         if (!string.IsNullOrEmpty(VM.Error))
         {
-            // se quiser tratar duplicado de forma especial, pode ver o texto aqui
             await Swal.FireAsync("Atenção", VM.Error, ok ? "warning" : "error");
         }
         else if (!string.IsNullOrEmpty(VM.Info))
@@ -132,10 +187,9 @@
         }
         else if (!string.IsNullOrEmpty(VM.Info))
         {
-            await Swal.FireAsync("Sucesso", VM.Info, "success");
+            await Swal.FireAsync("Informação", VM.Info, "info");
         }
 
         StateHasChanged();
     }
 }
-

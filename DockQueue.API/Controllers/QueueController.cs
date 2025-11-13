@@ -69,6 +69,48 @@ namespace DockQueue.Api.Controllers
             return Ok(result);
         }
 
+        // POST api/queue/start-box-operation
+        [HttpPost("start-box-operation")]
+        [Authorize(Policy = "Screen:QueueView")]
+        public async Task<ActionResult<QueueEntryViewDto>> StartBoxOperation([FromBody] StartBoxOperationDto dto)
+        {
+            try
+            {
+                var userId = GetUserIdFromToken();
+                var result = await _service.StartBoxOperationAsync(dto, userId);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro interno: {ex.Message}");
+            }
+        }
+
+        // POST api/queue/finish-box-operation
+        [HttpPost("finish-box-operation")]
+        [Authorize(Policy = "Screen:QueueView")]
+        public async Task<ActionResult<QueueEntryViewDto>> FinishBoxOperation([FromBody] FinishBoxOperationDto dto)
+        {
+            try
+            {
+                var userId = GetUserIdFromToken();
+                var result = await _service.FinishBoxOperationAsync(dto, userId);
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro interno: {ex.Message}");
+            }
+        }
+
         [HttpDelete]
         [Authorize(Policy = "Screen:QueueView")]
         private int? GetUserIdFromToken()

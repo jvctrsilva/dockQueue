@@ -37,7 +37,7 @@ namespace DockQueue.Infra.Data.Repositories
                 .Include(q => q.Driver)
                 .Include(q => q.Status)
                 .Include(q => q.Box)
-                .Where(q => q.Type == type)
+                .Where(q => q.Type == type && !q.Status.IsDefault) // Não mostra status padrão (finalizados)
                 .OrderBy(q => q.Priority ?? int.MaxValue)
                 .ThenBy(q => q.Position)
                 .ToListAsync();

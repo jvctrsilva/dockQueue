@@ -12,5 +12,7 @@ namespace DockQueue.Domain.Interfaces
         Task DeleteAsync(int id);
         Task<bool> ExistsDefaultAsync(int? ignoreId = null);
         Task<Status?> GetFirstBySequenceAsync();
+        Task<Status?> GetDefaultStatusAsync();
+        Task<bool> ExistsFinalStatusAsync(int? ignoreId = null); // Status com IsDefault = true E IsTerminal = true
     }
 }

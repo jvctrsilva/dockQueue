@@ -12,6 +12,8 @@ namespace DockQueue.Application.Services
         Task<QueueEntryViewDto> UpdateStatusAsync(UpdateQueueEntryStatusDto dto, int? userId = null);
         Task<QueueEntryViewDto> AssignBoxAsync(AssignBoxDto dto, int? userId = null);
         Task<QueueEntryViewDto?> GetDriverQueueEntryAsync(DriverQueueLookupDto dto);
+        Task<QueueEntryViewDto> StartBoxOperationAsync(StartBoxOperationDto dto, int? userId = null);
+        Task<QueueEntryViewDto> FinishBoxOperationAsync(FinishBoxOperationDto dto, int? userId = null);
 
         Task ClearQueueAsync(QueueType type);
     }
@@ -21,15 +23,18 @@ namespace DockQueue.Application.Services
         private readonly IQueueEntryRepository _queueRepo;
         private readonly IDriverRepository _driverRepo; // você cria essa interface se ainda não tiver
         private readonly IStatusRepository _statusRepo;
+        private readonly IBoxRepository _boxRepo;
 
         public QueueService(
             IQueueEntryRepository queueRepo,
             IDriverRepository driverRepo,
-            IStatusRepository statusRepo)
+            IStatusRepository statusRepo,
+            IBoxRepository boxRepo)
         {
             _queueRepo = queueRepo;
             _driverRepo = driverRepo;
             _statusRepo = statusRepo;
+            _boxRepo = boxRepo;
         }
 
         public async Task<QueueEntryViewDto> EnqueueAsync(CreateQueueEntryDto dto, int? userId = null)
@@ -139,7 +144,27 @@ namespace DockQueue.Application.Services
             var entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
                         ?? throw new Exception("Queue entry not found");
 
-            entry.AssignBox(dto.BoxId, userId);
+            if (dto.BoxId.HasValue)
+            {
+                // Verifica se o box já está ocupado por outro motorista
+                var box = await _boxRepo.GetByIdAsync(dto.BoxId.Value);
+                if (box == null)
+                {
+                    throw new Exception("Box não encontrado.");
+                }
+
+                if (box.DriverId.HasValue && box.DriverId.Value != entry.DriverId)
+                {
+                    throw new InvalidOperationException("Este box já está ocupado por outro motorista.");
+                }
+
+                entry.AssignBox(dto.BoxId.Value, userId);
+            }
+            else
+            {
+                entry.UnassignBox(userId);
+            }
+            
             await _queueRepo.UpdateAsync(entry);
 
             return MapToView(entry, entry.Driver);
@@ -161,7 +186,8 @@ namespace DockQueue.Application.Services
                 StatusId = e.StatusId,
                 StatusName = e.Status?.Name ?? string.Empty,
                 BoxId = e.BoxId,
-                BoxName = e.Box?.Name
+                BoxName = e.Box?.Name,
+                BoxInOperation = e.Box?.DriverId != null && e.Box.DriverId == d.Id
             };
         }
 
@@ -181,6 +207,86 @@ namespace DockQueue.Application.Services
         public async Task ClearQueueAsync(QueueType type)
         {
             await _queueRepo.ClearQueueAsync(type);
+        }
+
+        public async Task<QueueEntryViewDto> StartBoxOperationAsync(StartBoxOperationDto dto, int? userId = null)
+        {
+            var entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
+                        ?? throw new Exception("Queue entry not found");
+
+            if (!entry.BoxId.HasValue)
+            {
+                throw new InvalidOperationException("Motorista não possui box atribuído.");
+            }
+
+            var box = await _boxRepo.GetByIdAsync(entry.BoxId.Value);
+            if (box == null)
+            {
+                throw new Exception("Box não encontrado.");
+            }
+
+            // Atualiza Box.DriverId para indicar que está em operação
+            box.Update(box.Name, true, entry.DriverId, box.CreatedAt);
+            await _boxRepo.UpdateAsync(box);
+
+            // Recarrega a entrada com o box atualizado
+            entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
+                    ?? throw new Exception("Queue entry not found");
+
+            // Atualiza LastUpdatedByUserId na entrada
+            entry.UpdateStatus(entry.StatusId, userId);
+            await _queueRepo.UpdateAsync(entry);
+
+            // Recarrega novamente para ter o box atualizado
+            entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
+                    ?? throw new Exception("Queue entry not found");
+
+            return MapToView(entry, entry.Driver);
+        }
+
+        public async Task<QueueEntryViewDto> FinishBoxOperationAsync(FinishBoxOperationDto dto, int? userId = null)
+        {
+            var entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
+                        ?? throw new Exception("Queue entry not found");
+
+            if (!entry.BoxId.HasValue)
+            {
+                throw new InvalidOperationException("Motorista não possui box atribuído.");
+            }
+
+            var box = await _boxRepo.GetByIdAsync(entry.BoxId.Value);
+            if (box == null)
+            {
+                throw new Exception("Box não encontrado.");
+            }
+
+            // Busca o status padrão (finalizado)
+            var defaultStatus = await _statusRepo.GetDefaultStatusAsync()
+                ?? throw new InvalidOperationException("Status padrão não configurado.");
+
+            // Remove DriverId do box (libera o box)
+            box.Update(box.Name, false, null, box.CreatedAt);
+            await _boxRepo.UpdateAsync(box);
+
+            // Atualiza status para o padrão (finalizado)
+            var oldStatusId = entry.StatusId;
+            entry.UpdateStatus(defaultStatus.Id, userId);
+            await _queueRepo.UpdateAsync(entry);
+
+            // Registra histórico
+            var history = new QueueEntryStatusHistory(
+                entry.Id,
+                oldStatusId,
+                defaultStatus.Id,
+                userId
+            );
+            await _queueRepo.AddHistoryAsync(history);
+
+            // Recarrega a entrada para ter os dados atualizados
+            entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
+                    ?? throw new Exception("Queue entry not found");
+
+            return MapToView(entry, entry.Driver);
         }
     }
 }

@@ -66,6 +66,12 @@ namespace DockQueue.Domain.Entities
             LastUpdatedByUserId = userId;
         }
 
+        public void UnassignBox(int? userId = null)
+        {
+            BoxId = null;
+            LastUpdatedByUserId = userId;
+        }
+
         public void UpdatePosition(int newPosition)
         {
             Position = newPosition;

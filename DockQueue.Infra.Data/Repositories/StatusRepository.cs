@@ -19,7 +19,7 @@ namespace DockQueue.Infra.Data.Repositories
 
         public async Task<Status> GetByIdAsync(int id)
             => await _ctx.Statuses.FindAsync(id)
-                ?? throw new DomainExceptionValidation.EntityNotFoundException($"Status id {id} n„o encontrado");
+                ?? throw new DomainExceptionValidation.EntityNotFoundException($"Status id {id} n√£o encontrado");
 
         public async Task<Status> AddAsync(Status status)
         {
@@ -52,6 +52,18 @@ namespace DockQueue.Infra.Data.Repositories
             return await _ctx.Statuses
                 .OrderBy(s => s.DisplayOrder)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<Status?> GetDefaultStatusAsync()
+        {
+            return await _ctx.Statuses
+                .FirstOrDefaultAsync(s => s.IsDefault);
+        }
+
+        public async Task<bool> ExistsFinalStatusAsync(int? ignoreId = null)
+        {
+            return await _ctx.Statuses
+                .AnyAsync(s => s.IsDefault && s.IsTerminal && s.Active && (!ignoreId.HasValue || s.Id != ignoreId.Value));
         }
     }
 }
