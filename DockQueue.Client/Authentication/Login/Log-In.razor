@@ -36,7 +36,7 @@
                 </div>
 
                 <div class="login-field">
-                    <label for="password">Senha</label>
+                    <label for="password">Senha <small class="text-muted">(opcional no primeiro acesso)</small></label>
                     <InputText id="password" type="password" class="login-input" @bind-Value="LoginViewModel.Password" />
                     <ValidationMessage For="() => LoginViewModel.Password" />
                 </div>
@@ -79,12 +79,22 @@
         LoginViewModel.IsLoading = true;
         LoginViewModel.ClearError();
 
-        var success = await AuthService.LoginAsync(LoginViewModel);
+        var authResponse = await AuthService.LoginAsync(LoginViewModel);
 
         LoginViewModel.IsLoading = false;
 
-        if (success)
-            _nav.NavigateTo("/home", true);
+        if (authResponse != null)
+        {
+            // Se precisa definir senha, redireciona para página de definição
+            if (authResponse.RequiresPasswordChange)
+            {
+                _nav.NavigateTo("/set-password", true);
+            }
+            else
+            {
+                _nav.NavigateTo("/home", true);
+            }
+        }
     }
 
     private async Task ForgotPassword()

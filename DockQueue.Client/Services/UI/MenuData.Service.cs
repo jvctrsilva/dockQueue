@@ -55,7 +55,7 @@ public class MenuDataService
             screenRequired: Screen.BoxesView
         ),
         new MainMenuItems(
-            path: "/operadores",
+            path: "/usuarios",
             type: "link",
             title: "Operadores",
             icon: "bx bx-user",

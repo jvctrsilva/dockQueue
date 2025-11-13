@@ -6,10 +6,6 @@
 @inject SweetAlertService Swal
 @attribute [Authorize(Policy = "Screen:StatusView")]
 
-<h3 class="mb-3">
-    @(id == null ? "Novo Status" : $"Editar Status #{id}")
-</h3>
-
 @if (VM.IsLoading)
 {
     <div class="d-flex align-items-center gap-2 mb-3">

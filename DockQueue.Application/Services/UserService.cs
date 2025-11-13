@@ -1,9 +1,9 @@
 ﻿using System.Security.Claims;
-using System.Linq;
 using DockQueue.Application.DTOs;
 using DockQueue.Application.Interfaces;
 using DockQueue.Domain.Entities;
 using DockQueue.Domain.Interfaces;
+using DockQueue.Domain.Validation;
 using DockQueue.Application.Security;
 
 
@@ -27,6 +27,15 @@ namespace DockQueue.Application.Services
             var user = await _repo.GetByEmailAsync(loginUserDto.Email);
             if (user is null) return null;
 
+            // Se usuário não tem senha definida (primeiro login), permite login temporário
+            // O frontend deve detectar e redirecionar para definir senha
+            if (string.IsNullOrWhiteSpace(user.Password))
+            {
+                // Retorna usuário mas indica que precisa definir senha
+                // O frontend deve verificar isso e redirecionar
+                return Map(user);
+            }
+
             if (!PasswordHasher.Verify(loginUserDto.Password, user.Password))
                 return null;
 
@@ -47,13 +56,17 @@ namespace DockQueue.Application.Services
 
         public async Task<UserDto> CreateUserAsync(CreateUserDto createdUserDto)
         {
-            var hashed = PasswordHasher.Hash(createdUserDto.Password);
+            // Se não forneceu senha, cria usuário sem senha (será definida no primeiro login)
+            // Usa string vazia como marcador - senha vazia indica que precisa definir senha
+            var password = string.IsNullOrWhiteSpace(createdUserDto.Password) 
+                ? string.Empty 
+                : PasswordHasher.Hash(createdUserDto.Password);
 
             var entity = new User(
                 createdUserDto.Name,
                 createdUserDto.Number,
                 createdUserDto.Email,
-                hashed,
+                password,
                 createdUserDto.Role,
                 DateTime.UtcNow
             );
@@ -78,6 +91,34 @@ namespace DockQueue.Application.Services
             return true;
         }
 
+        public async Task UpdateUserAsync(int id, UpdateUserDto user)
+        {
+            var u = await _repo.GetByIdAsync(id);
+            u.Name = user.Name;
+            u.Number = user.Number;
+            u.Role = user.Role;
+
+            await _repo.UpdateAsync(u);
+        }
+
+        public async Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto)
+        {
+            var user = await _repo.GetByIdAsync(userId);
+            
+            if (string.IsNullOrWhiteSpace(dto.NewPassword))
+                throw new DomainExceptionValidation("Senha não pode ser vazia");
+
+            var hashed = PasswordHasher.Hash(dto.NewPassword);
+            user.Password = hashed;
+
+            await _repo.UpdateAsync(user);
+        }
+
+        public async Task<bool> RequiresPasswordChangeAsync(int userId)
+        {
+            var user = await _repo.GetByIdAsync(userId);
+            return string.IsNullOrWhiteSpace(user.Password);
+        }
         public async Task DeleteUserAsync(int id)
         {
             await _repo.DeleteAsync(id);

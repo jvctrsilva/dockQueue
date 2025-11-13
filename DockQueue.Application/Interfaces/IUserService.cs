@@ -9,6 +9,9 @@ namespace DockQueue.Application.Interfaces
         Task<UserDto> GetUserByIdAsync(int id);
         Task<UserDto> CreateUserAsync(CreateUserDto createdUserDto);
         Task<UserDto?> GetByEmailAsync(string email);
+        Task UpdateUserAsync(int id, UpdateUserDto updateUserDto);
+        Task UpdatePasswordAsync(int userId, UpdatePasswordDto dto);
+        Task<bool> RequiresPasswordChangeAsync(int userId);
         Task DeleteUserAsync(int id);
         Task<bool> UpdateRefreshTokenAsync(int userId, string refreshToken, DateTime? expiry);
         Task<(string accessToken, string refreshToken)?> RotateRefreshTokenAsync(string refreshToken, string accessToken);

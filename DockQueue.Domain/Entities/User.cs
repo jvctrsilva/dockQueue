@@ -4,13 +4,13 @@ namespace DockQueue.Domain.Entities;
 
 public class User
 {
-    public int Id { get; private set; }
-    public string Name { get; private set; } = default!;
-    public string Number { get; private set; } = default!;
-    public string Email { get; private set; } = default!;
-    public string Password { get; private set; } = default!;
-    public string Role { get; private set; } = default!;
-    public DateTime CreatedAt { get; private set; }
+    public int Id { get; set; }
+    public string Name { get; set; } = default!;
+    public string Number { get; set; } = default!;
+    public string Email { get; set; } = default!;
+    public string Password { get; set; } = default!;
+    public string Role { get; set; } = default!;
+    public DateTime CreatedAt { get; set; }
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiryTime { get; set; }
 

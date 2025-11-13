@@ -1,5 +1,7 @@
 using CurrieTechnologies.Razor.SweetAlert2;
+using DockQueue.Application.Interfaces;
 using DockQueue.Client.Handlers;
+using DockQueue.Client.Pages.Users;
 using DockQueue.Client.Services;
 using DockQueue.Client.Services.UI;
 using DockQueue.Client.Settings;
@@ -49,7 +51,7 @@ builder.Services.AddWMBSC();
 builder.Services.AddApplicationServices();
 builder.Services.AddSessionAndCaching();
 
-var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001";
+var apiBaseUrl = "https://localhost:5001";
 
 
 builder.Services.AddHttpClient("ApiClient", client =>
@@ -86,12 +88,13 @@ builder.Services.AddScoped<AuthViewModel>();
 builder.Services.AddScoped<LoginViewModel>();
 builder.Services.AddScoped<BoxEditViewModel>();
 builder.Services.AddScoped<BoxListViewModel>();
-builder.Services.AddScoped<UserViewModel>();
-builder.Services.AddScoped<PermissionEditorViewModel>();
+builder.Services.AddScoped<UserListViewModel>();
 builder.Services.AddScoped<StatusListViewModel>();
 builder.Services.AddScoped<StatusEditViewModel>();
 builder.Services.AddScoped<QueueViewModel>();
 builder.Services.AddScoped<DriverQueueViewModel>();
+builder.Services.AddScoped<UserEditViewModel>();
+builder.Services.AddScoped<SetPasswordViewModel>();
 
 var app = builder.Build();
 

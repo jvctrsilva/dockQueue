@@ -30,6 +30,12 @@ public class LoginController : ControllerBase
         var user = await _userService.AuthenticateAsync(loginUserDto);
         if (user is null) return Unauthorized("Email ou senha inválidos");
 
+        // Verifica se usuário precisa definir senha (primeiro login)
+        var requiresPasswordChange = await _userService.RequiresPasswordChangeAsync(user.Id);
+
+        // Se precisa definir senha, permite login mas indica que deve definir senha
+        // O frontend deve redirecionar para página de definição de senha
+
         // 1) carrega permissões do usuário
         var perms = await _permService.GetByUserIdAsync(user.Id, ct);
         var isAdmin = string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase);
@@ -59,7 +65,8 @@ public class LoginController : ControllerBase
         {
             Token = accessToken,
             RefreshToken = refreshToken,
-            User = user
+            User = user,
+            RequiresPasswordChange = requiresPasswordChange
         });
     }
 }

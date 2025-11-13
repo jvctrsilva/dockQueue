@@ -41,7 +41,10 @@
 
 		<PackageReference Include="System.Drawing.Common" Version="9.0.2" />
 	</ItemGroup>
-	
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<Content Remove="wwwroot\assets\**\*" />
+	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\DockQueue\DockQueue.Application\DockQueue.Application.csproj" />
