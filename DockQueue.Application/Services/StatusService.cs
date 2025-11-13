@@ -27,8 +27,12 @@ namespace DockQueue.Application.Services
                 throw new DomainExceptionValidation("Já existe um status padrão");
 
             var entity = new Status(
-                dto.Code, dto.Name, dto.Description,
-                dto.DisplayOrder, dto.IsDefault, dto.IsTerminal,
+                dto.Code, 
+                dto.Name,
+                dto.Description,
+                dto.DisplayOrder, 
+                dto.IsDefault, 
+                dto.IsTerminal,
                 dto.Active, DateTime.UtcNow
             );
 

@@ -77,18 +77,31 @@ public class SessionService
     }
     public async Task SetInitalAppStateToSession(AppState state)
     {
-        if (_httpContextAccessor.HttpContext != null)
+        try
         {
-            var session = _httpContextAccessor.HttpContext.Session;
-            if (session != null)
-            {
-                var jsonState = JsonSerializer.Serialize(state);
-                session.SetString("InitalAppState", jsonState);
-            }
-        }
+            var http = _httpContextAccessor.HttpContext;
+            if (http is null)
+                return;
 
-        await Task.CompletedTask;
+            // se a resposta já começou, NÃO tenta usar Session
+            if (http.Response.HasStarted)
+                return;
+
+            // garante que a sessão foi carregada
+            if (!http.Session.IsAvailable)
+            {
+                await http.Session.LoadAsync();
+            }
+
+            var json = JsonSerializer.Serialize(state);
+            http.Session.SetString("AppState", json);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[SessionService] Falha ao salvar AppState na sessão: {ex.Message}");
+        }
     }
+
 
     public async Task<AppState?> GetInitalAppStateFromSession()
     {

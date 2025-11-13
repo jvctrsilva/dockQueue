@@ -79,28 +79,12 @@
         LoginViewModel.IsLoading = true;
         LoginViewModel.ClearError();
 
-        try
-        {
-            var success = await AuthService.LoginAsync(LoginViewModel);
+        var success = await AuthService.LoginAsync(LoginViewModel);
 
-            if (success)
-            {
-                _nav.NavigateTo("/home");
-            }
-            else
-            {
-                StateHasChanged();
-            }
-        }
-        catch (Exception ex)
-        {
-            LoginViewModel.SetError($"Erro inesperado: {ex.Message}");
-            StateHasChanged();
-        }
-        finally
-        {
-            LoginViewModel.IsLoading = false;
-        }
+        LoginViewModel.IsLoading = false;
+
+        if (success)
+            _nav.NavigateTo("/home", true);
     }
 
     private async Task ForgotPassword()

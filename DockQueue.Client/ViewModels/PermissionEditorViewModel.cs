@@ -24,7 +24,9 @@ public class PermissionEditorViewModel
         try
         {
             IsLoading = true; Error = null; UserId = userId;
+
             var payload = await _api.GetScreenDataAsync(userId, ct);
+
             if (payload is null) { Error = "Não encontrado."; return; }
 
             AllStatuses = payload.AllStatuses ?? new List<StatusDto>();

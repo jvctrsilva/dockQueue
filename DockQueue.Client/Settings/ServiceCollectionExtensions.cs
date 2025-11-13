@@ -18,7 +18,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<MenuDataService>();
         services.AddScoped<NavScrollService>();
         services.AddScoped<SessionService>();
-        services.AddScoped<WorkingHoursService>();
 
         return services;
     }

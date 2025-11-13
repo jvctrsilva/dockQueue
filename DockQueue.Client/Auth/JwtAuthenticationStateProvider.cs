@@ -1,43 +1,73 @@
-﻿using DockQueue.Application.DTOs;
-using DockQueue.Client.Services.UI;
-using Microsoft.AspNetCore.Components.Authorization;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text.Json;
+using DockQueue.Application.DTOs;
+using DockQueue.Client.ViewModels;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 {
-    private readonly SessionService _session;
+    private readonly ProtectedLocalStorage _localStorage;
+    private readonly AuthViewModel _auth;
 
-    public JwtAuthenticationStateProvider(SessionService session) => _session = session;
-
-    public override Task<AuthenticationState> GetAuthenticationStateAsync()
+    public JwtAuthenticationStateProvider(
+        ProtectedLocalStorage localStorage,
+        AuthViewModel auth)
     {
-        var http = _session.GetHttpContext();
-        var json = http?.Session?.GetString("AuthData");
+        _localStorage = localStorage;
+        _auth = auth;
+    }
 
-        if (string.IsNullOrEmpty(json))
-            return Task.FromResult(Anon());
-
-        var auth = JsonSerializer.Deserialize<AuthResponseDto>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-        if (auth is null || string.IsNullOrWhiteSpace(auth.Token))
-            return Task.FromResult(Anon());
-
+    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    {
         try
         {
-            var claims = JwtHelper.ExtractClaims(auth.Token);
+            var stored = await _localStorage.GetAsync<AuthResponseDto>("AuthData");
+            var authData = stored.Success ? stored.Value : null;
+
+            if (authData is null || string.IsNullOrWhiteSpace(authData.Token))
+            {
+                _auth.ClearAuthData();
+                return Anon();
+            }
+
+            // Atualiza o AuthViewModel (token para os services)
+            _auth.SetAuthData(authData);
+
+            // Monta as claims para o Blazor
+            var claims = JwtHelper.ExtractClaims(authData.Token);
             var identity = new ClaimsIdentity(claims, "jwt");
-            return Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity)));
+
+            return new AuthenticationState(new ClaimsPrincipal(identity));
         }
         catch
         {
-            return Task.FromResult(Anon());
+            _auth.ClearAuthData();
+            return Anon();
         }
     }
 
-    public void Refresh()
-        => NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    public async Task SetAuthDataAsync(AuthResponseDto authData)
+    {
+        await _localStorage.SetAsync("AuthData", authData);
+        _auth.SetAuthData(authData);
+
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    }
+
+    public async Task<AuthResponseDto?> GetStoredAuthDataAsync()
+    {
+        var stored = await _localStorage.GetAsync<AuthResponseDto>("AuthData");
+        return stored.Success ? stored.Value : null;
+    }
+
+    public async Task ClearAuthDataAsync()
+    {
+        await _localStorage.DeleteAsync("AuthData");
+        _auth.ClearAuthData();
+
+        NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+    }
 
     private static AuthenticationState Anon()
         => new(new ClaimsPrincipal(new ClaimsIdentity()));
