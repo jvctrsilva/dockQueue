@@ -3,6 +3,111 @@
 @inject AuthService AuthService
 @inject NavigationManager Nav
 
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="mb-1">DockQueue</h2>
+            <p class="text-muted">
+                Sistema de gestão de filas de carregamento e descarregamento em docas.
+            </p>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Arquitetura -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Arquitetura do Projeto</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Clean Architecture / separação em camadas</li>
+                        <li><strong>Domain</strong>: entidades, regras de negócio, interfaces</li>
+                        <li><strong>Application</strong>: services, DTOs, casos de uso</li>
+                        <li><strong>Infra.Data</strong>: repositórios, Entity Framework Core</li>
+                        <li><strong>API</strong>: endpoints REST (.NET)</li>
+                        <li><strong>Client</strong>: Blazor (UI web)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Linguagens & Frameworks -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Linguagens &amp; Frameworks</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>C# / .NET</li>
+                        <li>ASP.NET Core Web API</li>
+                        <li>Blazor Server para o front-end</li>
+                        <li>Entity Framework Core</li>
+                        <li>Bootstrap / Template de admin para UI</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banco de Dados -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Banco de Dados</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>PostgreSQL</li>
+                        <li>Mapeamento via Entity Framework Core</li>
+                        <li>Migrations para versionamento de schema</li>
+                        <li>Separação de ambientes (dev / produção)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hospedagem / Infra -->
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Hospedagem &amp; Infraestrutura</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>AWS EC2 para aplicação</li>
+                        <li>AWS RDS (PostgreSQL) para banco de dados</li>
+                        <li>Docker para padronizar ambiente</li>
+                        <li>Controle de acesso por roles e permissões</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- (Opcional) Seção Trabalho Acadêmico -->
+        <div class="col-12">
+            <div class="card mt-2">
+                <div class="card-header">
+                    <h5 class="mb-0">Informações do Trabalho</h5>
+                </div>
+                <div class="card-body">
+                    <p>
+                        Projeto desenvolvido para a disciplina de Engenharia de Software / Projeto Integrador,
+                        com foco em:
+                    </p>
+                    <ul>
+                        <li>Aplicação de boas práticas de arquitetura (Clean Architecture)</li>
+                        <li>Uso de padrões de projeto e camadas bem definidas</li>
+                        <li>Integração entre back-end, front-end e banco de dados</li>
+                        <li>Experiência prática com infraestrutura em nuvem (AWS)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @code {
     protected override async Task OnInitializedAsync()
     {

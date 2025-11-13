@@ -282,6 +282,8 @@ namespace DockQueue.Application.Services
             );
             await _queueRepo.AddHistoryAsync(history);
 
+            await _queueRepo.RemoveEntry(entry);
+
             // Recarrega a entrada para ter os dados atualizados
             entry = await _queueRepo.GetByIdAsync(dto.QueueEntryId)
                     ?? throw new Exception("Queue entry not found");

@@ -92,5 +92,12 @@ namespace DockQueue.Infra.Data.Repositories
                     q.Type == type &&
                     q.Driver.DocumentNumber == documentNumber);
         }
+
+        public async Task<bool> RemoveEntry(QueueEntry entry)
+        {
+            _ctx.QueueEntries.Remove(entry);
+            var changes = await _ctx.SaveChangesAsync();
+            return changes > 0;
+        }
     }
 }

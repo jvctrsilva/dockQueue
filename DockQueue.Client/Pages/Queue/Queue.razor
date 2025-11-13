@@ -10,148 +10,159 @@
 
 <PageTitle>Filas</PageTitle>
 
-<div class="mb-3">
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <button class="nav-link @(VM.ActiveType == QueueType.Unloading ? "active" : "")"
-                    @onclick="() => ChangeType(QueueType.Unloading)">
-                Descarregamento
-            </button>
-        </li>
-        <li class="nav-item">
-            <button class="nav-link @(VM.ActiveType == QueueType.Loading ? "active" : "")"
-                    @onclick="() => ChangeType(QueueType.Loading)">
-                Carregamento
-            </button>
-        </li>
-        <button class="btn btn-sm btn-danger ms-3"
-                @onclick="OnClearQueue">
-            Limpar
-        </button>
-    </ul>
-</div>
-
-@if (VM.IsLoading)
-{
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <div class="spinner-border" role="status"></div>
-        <strong>Carregando...</strong>
-    </div>
-}
-else if (!string.IsNullOrEmpty(VM.Error))
-{
-    <div class="alert alert-danger" role="alert">@VM.Error</div>
-}
-else if (VM.Entries.Count == 0)
-{
-    <div class="text-muted">Nenhum motorista na fila atual.</div>
-}
-else
-{
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Posição</th>
-                <th>Motorista</th>
-                <th>Documento</th>
-                <th>Placa</th>
-                <th>Status atual</th>
-                <th>Box atual</th>
-                <th>Entrada</th>
-                <th style="width: 200px;">Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var entry in VM.Entries)
-            {
-                <tr>
-                    <td>@entry.Position</td>
-                    <td>@entry.DriverName</td>
-                    <td>@entry.DocumentNumber</td>
-                    <td>@entry.VehiclePlate</td>
-                    <td>@entry.StatusName</td>
-                    <td>@(entry.BoxName ?? "SEM BOX")</td>
-                    <td>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                    <td>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-primary"
-                                    @onclick="() => OpenMoveModal(entry)">
-                                Movimentar
-                            </button>
-                            @if (entry.BoxId.HasValue)
-                            {
-                                @if (entry.BoxInOperation == true)
-                                {
-                                    <button class="btn btn-sm btn-danger" @onclick="() => OnFinishBoxOperation(entry.Id)"title="Finalizar operação no box">
-                                        ⏹ Finalizar
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn btn-sm btn-success"@onclick="() => OnStartBoxOperation(entry.Id)"title="Iniciar operação no box">
-                                        ▶ Iniciar
-                                    </button>
-                                }
-                            }
-                        </div>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-<div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="moveModalLabel">Movimentar na Fila</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CancelMove"></button>
+<div class="container-fluid mt-3">
+    <div class="card-body mt-3 mb-3 border-bottom pb-2">
+        <div class="d-flex align-items-center justify-content-between">
+            <!-- Centro: botões de tipo -->
+            <div class="flex-grow-1 d-flex justify-content-center">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <button class="nav-link @(VM.ActiveType == QueueType.Unloading ? "active" : "")"
+                                @onclick="() => ChangeType(QueueType.Unloading)">
+                            Descarregamento
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link @(VM.ActiveType == QueueType.Loading ? "active" : "")"
+                                @onclick="() => ChangeType(QueueType.Loading)">
+                            Carregamento
+                        </button>
+                    </li>
+                </ul>
             </div>
-            <div class="modal-body">
-                @if (currentEntry != null)
+
+            <!-- Direita: botão Limpar -->
+            <button class="btn btn-sm btn-danger ms-3"
+                    @onclick="OnClearQueue">
+                Limpar
+            </button>
+        </div>
+    </div>
+
+    @if (VM.IsLoading)
+    {
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="spinner-border" role="status"></div>
+            <strong>Carregando...</strong>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(VM.Error))
+    {
+        <div class="alert alert-danger" role="alert">@VM.Error</div>
+    }
+    else if (VM.Entries.Count == 0)
+    {
+        <div class="text-lg-center">Nenhum motorista na fila atual.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="thead-themed">
+                <tr>
+                    <th>Posição</th>
+                    <th>Motorista</th>
+                    <th>Documento</th>
+                    <th>Placa</th>
+                    <th>Status atual</th>
+                    <th>Box atual</th>
+                    <th>Entrada</th>
+                    <th style="width: 200px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var entry in VM.Entries)
                 {
-                    <div class="mb-3">
-                        <strong>Motorista:</strong> @currentEntry.DriverName<br />
-                        <strong>Documento:</strong> @currentEntry.DocumentNumber<br />
-                        <strong>Placa:</strong> @currentEntry.VehiclePlate<br />
-                        <strong>Status Atual:</strong> @currentEntry.StatusName
-                    </div>
+                    <tr>
+                        <td>@entry.Position</td>
+                        <td>@entry.DriverName</td>
+                        <td>@entry.DocumentNumber</td>
+                        <td>@entry.VehiclePlate</td>
+                        <td>@entry.StatusName</td>
+                        <td>@(entry.BoxName ?? "SEM BOX")</td>
+                        <td>@entry.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                    <button class="btn btn-sm btn-outline-primary"
+                                        @onclick="() => OpenMoveModal(entry)">
+                                    Movimentar
+                                </button>
+                                @if (entry.BoxId.HasValue)
+                                {
+                                    @if (entry.BoxInOperation == true)
+                                    {
+                                        <button class="btn btn-sm btn-danger" @onclick="() => OnFinishBoxOperation(entry.Id)" title="Finalizar operação no box">
+                                            ⏹ Finalizar
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-sm btn-success" @onclick="() => OnStartBoxOperation(entry.Id)" title="Iniciar operação no box">
+                                            ▶ Iniciar
+                                        </button>
+                                    }
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        </div>
+    }
 
-                    <div class="mb-3">
-                        <label class="form-label">Novo Status</label>
-                        <select class="form-select" @bind="movingStatusId" @bind:after="OnStatusChanged">
-                            @foreach (var status in VM.Statuses)
-                            {
-                                <option value="@status.Id">
-                                    @status.Name
-                                </option>
-                            }
-                        </select>
-                    </div>
-
-                    @if (IsTerminalStatus(movingStatusId))
+    <div class="modal fade" id="moveModal" tabindex="-1" aria-labelledby="moveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="moveModalLabel">Movimentar na Fila</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="CancelMove"></button>
+                </div>
+                <div class="modal-body">
+                    @if (currentEntry != null)
                     {
                         <div class="mb-3">
-                            <label class="form-label">Box</label>
-                            <select class="form-select" @bind="selectedBoxId" @bind:after="OnBoxChanged">
-                                <option value="0">Selecione um box (opcional)</option>
-                                @foreach (var box in GetAvailableBoxes())
+                            <strong>Motorista:</strong> @currentEntry.DriverName<br />
+                            <strong>Documento:</strong> @currentEntry.DocumentNumber<br />
+                            <strong>Placa:</strong> @currentEntry.VehiclePlate<br />
+                            <strong>Status Atual:</strong> @currentEntry.StatusName
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Novo Status</label>
+                            <select class="form-select" @bind="movingStatusId" @bind:after="OnStatusChanged">
+                                @foreach (var status in VM.Statuses)
                                 {
-                                    <option value="@box.Id">
-                                        @box.Name
+                                    <option value="@status.Id">
+                                        @status.Name
                                     </option>
                                 }
                             </select>
                         </div>
+
+                        @if (IsTerminalStatus(movingStatusId))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Box</label>
+                                <select class="form-select" @bind="selectedBoxId" @bind:after="OnBoxChanged">
+                                    <option value="0">SELECIONE UM BOX (OPCIONAL)</option>
+                                    @foreach (var box in GetAvailableBoxes())
+                                    {
+                                        <option value="@box.Id">
+                                            @box.Name
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                        }
                     }
-                }
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @onclick="CancelMove">Cancelar</button>
-                <button type="button" class="btn btn-primary" @onclick="ConfirmMove">
-                    Confirmar Movimentação
-                </button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @onclick="CancelMove">Cancelar</button>
+                    <button type="button" class="btn btn-success" @onclick="ConfirmMove">
+                        Confirmar Movimentação
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -183,10 +194,10 @@ else
         movingStatusId = entry.StatusId;
         movingBoxId = entry.BoxId;
         selectedBoxId = entry.BoxId ?? 0;
-        
+
         StateHasChanged();
-        
-        await JSRuntime.InvokeVoidAsync("eval", 
+
+        await JSRuntime.InvokeVoidAsync("eval",
             "var modalElement = document.getElementById('moveModal'); " +
             "var modal = new bootstrap.Modal(modalElement); " +
             "modal.show();");
@@ -237,7 +248,7 @@ else
         // 2) Atribui ou remove o box conforme seleção
         // Se tiver box selecionado, atribui; se não tiver, remove o box existente
         await VM.AssignBoxAsync(movingEntryId.Value, movingBoxId);
-        
+
         if (!string.IsNullOrEmpty(VM.Error))
         {
             await Swal.FireAsync("Erro", VM.Error, "error");
@@ -268,7 +279,7 @@ else
         // - Boxes livres (DriverId == null)
         // - Box já atribuído ao mesmo motorista (DriverId == currentEntry.DriverId)
         // - Box atual do motorista (mesmo que esteja ocupado, se for do mesmo motorista)
-        return VM.Boxes.Where(b => 
+        return VM.Boxes.Where(b =>
             !b.DriverId.HasValue || // Box livre
             b.DriverId == currentEntry.DriverId // Box já atribuído ao mesmo motorista
         ).ToList();
