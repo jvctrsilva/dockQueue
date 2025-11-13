@@ -37,7 +37,7 @@ namespace DockQueue.Infra.Data.Repositories
                 .Include(q => q.Driver)
                 .Include(q => q.Status)
                 .Include(q => q.Box)
-                .Where(q => q.Type == type)
+                .Where(q => q.Type == type && !q.Status.IsDefault) // Não mostra status padrão (finalizados)
                 .OrderBy(q => q.Priority ?? int.MaxValue)
                 .ThenBy(q => q.Position)
                 .ToListAsync();
@@ -91,6 +91,13 @@ namespace DockQueue.Infra.Data.Repositories
                 .AnyAsync(q =>
                     q.Type == type &&
                     q.Driver.DocumentNumber == documentNumber);
+        }
+
+        public async Task<bool> RemoveEntry(QueueEntry entry)
+        {
+            _ctx.QueueEntries.Remove(entry);
+            var changes = await _ctx.SaveChangesAsync();
+            return changes > 0;
         }
     }
 }

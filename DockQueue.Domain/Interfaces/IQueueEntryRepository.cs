@@ -14,5 +14,6 @@ namespace DockQueue.Domain.Interfaces
         Task<QueueEntry?> GetActiveByDriverAsync(QueueType type, string documentNumber, string vehiclePlate);
         Task ClearQueueAsync(QueueType type);
         Task<bool> HasActiveEntryByDocumentAsync(QueueType type, string documentNumber);
-    }
+        Task<bool> RemoveEntry(QueueEntry entry);
+    } 
 }

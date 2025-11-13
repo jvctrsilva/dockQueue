@@ -105,13 +105,26 @@ namespace DockQueue.Client.ViewModels
                     Entries[index] = updated;
                 }
             }
+            catch (HttpRequestException ex)
+            {
+                var message = ex.Message;
+                var colonIndex = message.IndexOf(':');
+                if (colonIndex > 0 && colonIndex < message.Length - 1)
+                {
+                    Error = message.Substring(colonIndex + 1).Trim();
+                }
+                else
+                {
+                    Error = message;
+                }
+            }
             catch (Exception ex)
             {
                 Error = $"Erro ao atualizar status: {ex.Message}";
             }
         }
 
-        public async Task AssignBoxAsync(int queueEntryId, int boxId)
+        public async Task AssignBoxAsync(int queueEntryId, int? boxId)
         {
             Error = null;
 
@@ -126,9 +139,11 @@ namespace DockQueue.Client.ViewModels
                 var updated = await _queueService.AssignBoxAsync(dto);
                 if (updated == null)
                 {
-                    Error = "Não foi possível atribuir o box.";
+                    Error = "Não foi possível atualizar o box.";
                     return;
                 }
+
+                Boxes = await _boxService.GetAllAsync();
 
                 var index = Entries.FindIndex(e => e.Id == queueEntryId);
                 if (index >= 0)
@@ -138,7 +153,7 @@ namespace DockQueue.Client.ViewModels
             }
             catch (Exception ex)
             {
-                Error = $"Erro ao atribuir box: {ex.Message}";
+                Error = $"Erro ao atualizar box: {ex.Message}";
             }
         }
 
@@ -161,6 +176,70 @@ namespace DockQueue.Client.ViewModels
             catch (Exception ex)
             {
                 Error = $"Erro ao limpar fila: {ex.Message}";
+            }
+        }
+
+        public async Task StartBoxOperationAsync(int queueEntryId)
+        {
+            Error = null;
+
+            try
+            {
+                var dto = new StartBoxOperationDto
+                {
+                    QueueEntryId = queueEntryId
+                };
+
+                var updated = await _queueService.StartBoxOperationAsync(dto);
+                if (updated == null)
+                {
+                    Error = "Não foi possível iniciar a operação no box.";
+                    return;
+                }
+
+                Boxes = await _boxService.GetAllAsync();
+
+                var index = Entries.FindIndex(e => e.Id == queueEntryId);
+                if (index >= 0)
+                {
+                    Entries[index] = updated;
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = $"Erro ao iniciar operação: {ex.Message}";
+            }
+        }
+
+        public async Task FinishBoxOperationAsync(int queueEntryId)
+        {
+            Error = null;
+
+            try
+            {
+                var dto = new FinishBoxOperationDto
+                {
+                    QueueEntryId = queueEntryId
+                };
+
+                var updated = await _queueService.FinishBoxOperationAsync(dto);
+                if (updated == null)
+                {
+                    Error = "Não foi possível finalizar a operação no box.";
+                    return;
+                }
+
+                // Remove da lista pois o status foi atualizado para status final (finalizado)
+                // e não será mais exibido na fila
+                var index = Entries.FindIndex(e => e.Id == queueEntryId);
+                if (index >= 0)
+                {
+                    Entries.RemoveAt(index);
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = $"Erro ao finalizar operação: {ex.Message}";
             }
         }
     }

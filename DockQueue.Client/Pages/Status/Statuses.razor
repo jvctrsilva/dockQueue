@@ -39,28 +39,26 @@
                     <table class="table table-hover align-middle">
                         <thead class="thead-themed">
                             <tr>
-                                <th style="width:90px;">#ID</th>
-                                <th style="width:140px;">Código</th>
+                                <th>Código</th>
                                 <th>Nome</th>
-                                <th style="width:120px;">Ordem</th>
-                                <th style="width:140px;">Padrão</th>
-                                <th style="width:140px;">Terminal</th>
-                                <th style="width:140px;">Ativo</th>
-                                <th class="text-end" style="width:220px;">Ações</th>
+                                <th class="text-center"> Ordem</th>
+                                <th class="text-center">Status Final</th>
+                                <th class="text-center">Vincular Box</th>
+                                <th class="text-center">Ativo</th>
+                                <th class ="text-end">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var s in VM.Items.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name))
                             {
                                 <tr>
-                                    <td>@s.Id</td>
                                     <td>@s.Code</td>
                                     <td>@s.Name</td>
-                                    <td>@s.DisplayOrder</td>
-                                    <td>
+                                    <td class="text-center">@s.DisplayOrder</td>
+                                    <td class="text-center">
                                         @if (s.IsDefault)
                                         {
-                                            <span class="badge text-bg-success p-3">Sim</span>
+                                            <span class="badge text-bg-success">Sim</span>
                                         }
                                         else
                                         {
@@ -68,7 +66,7 @@
                                             <span class="badge text-bg-danger">Não</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if (s.IsTerminal)
                                         {
                                             <span class="badge text-bg-success">Sim</span>
@@ -79,7 +77,7 @@
                                             <span class="badge text-bg-danger">Não</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if (s.Active)
                                         {
                                             <span class="badge text-bg-success">Ativo</span>

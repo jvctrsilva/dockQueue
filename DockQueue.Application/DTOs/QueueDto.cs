@@ -21,7 +21,17 @@ namespace DockQueue.Application.DTOs
     public class AssignBoxDto
     {
         public int QueueEntryId { get; set; }
-        public int BoxId { get; set; }
+        public int? BoxId { get; set; } // Nullable para permitir remover o box
+    }
+
+    public class StartBoxOperationDto
+    {
+        public int QueueEntryId { get; set; }
+    }
+
+    public class FinishBoxOperationDto
+    {
+        public int QueueEntryId { get; set; }
     }
     public class QueueEntryViewDto
     {
@@ -42,5 +52,6 @@ namespace DockQueue.Application.DTOs
 
         public int? BoxId { get; set; }
         public string? BoxName { get; set; }
+        public bool? BoxInOperation { get; set; } // Indica se o box está em operação (Box.DriverId != null)
     }
 }

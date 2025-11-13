@@ -56,9 +56,62 @@ public class QueueService
 
         var response = await _httpClient.PutAsJsonAsync("/api/queue/status", dto);
         if (!response.IsSuccessStatusCode)
-            return null;
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new HttpRequestException($"Falha ao atualizar status ({(int)response.StatusCode}): {ExtractErrorMessage(errorBody)}");
+        }
 
         return await response.Content.ReadFromJsonAsync<QueueEntryViewDto>();
+    }
+
+    private string ExtractErrorMessage(string errorBody)
+    {
+        if (string.IsNullOrWhiteSpace(errorBody))
+            return "Erro desconhecido";
+
+        try
+        {
+            var trimmed = errorBody.Trim();
+            
+            if (trimmed.StartsWith("{") && trimmed.EndsWith("}"))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(trimmed);
+                var root = doc.RootElement;
+                
+                if (root.TryGetProperty("error", out var errorProp))
+                {
+                    var errorValue = errorProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(errorValue))
+                        return errorValue;
+                }
+                
+                if (root.TryGetProperty("message", out var messageProp))
+                {
+                    var messageValue = messageProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(messageValue))
+                        return messageValue;
+                }
+                
+                if (root.TryGetProperty("title", out var titleProp))
+                {
+                    var titleValue = titleProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(titleValue))
+                        return titleValue;
+                }
+            }
+            
+            if (trimmed.StartsWith("\"") && trimmed.EndsWith("\""))
+                return trimmed.Substring(1, trimmed.Length - 2);
+            
+            return trimmed;
+        }
+        catch
+        {
+            var trimmed = errorBody.Trim();
+            if (trimmed.StartsWith("\"") && trimmed.EndsWith("\""))
+                return trimmed.Substring(1, trimmed.Length - 2);
+            return trimmed;
+        }
     }
 
     public async Task<QueueEntryViewDto?> AssignBoxAsync(AssignBoxDto dto)
@@ -89,5 +142,27 @@ public class QueueService
 
         var response = await _httpClient.DeleteAsync($"/api/queue?type={type}");
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<QueueEntryViewDto?> StartBoxOperationAsync(StartBoxOperationDto dto)
+    {
+        AttachAuthHeader();
+
+        var response = await _httpClient.PostAsJsonAsync("/api/queue/start-box-operation", dto);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<QueueEntryViewDto>();
+    }
+
+    public async Task<QueueEntryViewDto?> FinishBoxOperationAsync(FinishBoxOperationDto dto)
+    {
+        AttachAuthHeader();
+
+        var response = await _httpClient.PostAsJsonAsync("/api/queue/finish-box-operation", dto);
+        if (!response.IsSuccessStatusCode)
+            return null;
+
+        return await response.Content.ReadFromJsonAsync<QueueEntryViewDto>();
     }
 }

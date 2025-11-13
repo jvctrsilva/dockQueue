@@ -21,10 +21,14 @@ namespace DockQueue.Application.Services
         {
             var existing = await _repo.GetByCodeAsync(dto.Code.Trim().ToUpperInvariant());
             if (existing is not null)
-                throw new DomainExceptionValidation("J· existe status com esse cÛdigo");
+                throw new DomainExceptionValidation("J√° existe status com esse c√≥digo");
 
             if (dto.IsDefault && await _repo.ExistsDefaultAsync())
-                throw new DomainExceptionValidation("J· existe um status padr„o");
+                throw new DomainExceptionValidation("J√° existe um status final");
+
+            // Valida√ß√£o: n√£o permite mais de um status final ativo (IsDefault = true E IsTerminal = true)
+            if (dto.IsDefault && dto.IsTerminal && dto.Active && await _repo.ExistsFinalStatusAsync())
+                throw new DomainExceptionValidation("J√° existe um status final ativo. Desative o status final existente antes de criar outro.");
 
             var entity = new Status(
                 dto.Code, 
@@ -46,12 +50,16 @@ namespace DockQueue.Application.Services
 
             var otherWithSameCode = await _repo.GetByCodeAsync(dto.Code.Trim().ToUpperInvariant());
             if (otherWithSameCode is not null && otherWithSameCode.Id != id)
-                throw new DomainExceptionValidation("J· existe status com esse cÛdigo");
+                throw new DomainExceptionValidation("J√° existe status com esse c√≥digo");
 
-            // Regra do IsDefault: impede ficar com 2 padrıes
+            // Regra do IsDefault: impede ficar com 2 status finais
             var willBeDefault = dto.IsDefault;
             if (willBeDefault && await _repo.ExistsDefaultAsync(ignoreId: id))
-                throw new DomainExceptionValidation("J· existe um status padr„o");
+                throw new DomainExceptionValidation("J√° existe um status final");
+
+            // Valida√ß√£o: n√£o permite mais de um status final ativo (IsDefault = true E IsTerminal = true)
+            if (dto.IsDefault && dto.IsTerminal && dto.Active && await _repo.ExistsFinalStatusAsync(ignoreId: id))
+                throw new DomainExceptionValidation("J√° existe um status final ativo. Desative o status final existente antes de ativar outro.");
 
             entity.Update(dto.Code, dto.Name, dto.Description,
                           dto.DisplayOrder, dto.IsDefault, dto.IsTerminal, dto.Active);

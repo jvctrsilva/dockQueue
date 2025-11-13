@@ -3,7 +3,7 @@
 @attribute [Authorize(Policy = "Screen:SettingsView")]
 @inject OperatingScheduleViewModel VM
 
-<h3>Horário de Funcionamento</h3>
+
 
 @if (VM.IsLoading)
 {
@@ -15,7 +15,10 @@ else if (!string.IsNullOrEmpty(VM.Error))
 }
 else
 {
-    <div class="card">
+    <div class="card custom-card">
+        <div class="card-header">
+            <div class="card-title"> Configurações </div>
+        </div>
         <div class="card-body">
             @if (VM.Current is not null)
             {
@@ -68,15 +71,6 @@ else
                            @oninput="OnEndInput" />
                 </div>
 
-                <div class="col-md-4">
-                    <label for="tz" class="form-label">Time Zone</label>
-                    <input id="tz"
-                           class="form-control"
-                           type="text"
-                           value="@(VM.Edit.TimeZone ?? string.Empty)"
-                           @oninput="OnTzInput" disabled />
-                    <div class="form-text">Ex.: America/Sao_Paulo</div>
-                </div>
             </div>
 
             <div class="mt-4 d-flex gap-2">

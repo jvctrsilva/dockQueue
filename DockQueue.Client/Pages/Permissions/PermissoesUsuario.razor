@@ -10,24 +10,21 @@
 
 <div class="container-fluid mt-3">
 	<div class="card custom-card">
-		<div class="card-header">
-			<div class="card-title">Permissões de Usuário</div>
-		</div>
-		<div class="card-body">
-			<div class="mb-3 d-flex justify-content-between align-items-center">
-				<div class="input-group" style="max-width: 420px;">
-					<span class="input-group-text">Buscar</span>
-					<input class="form-control" placeholder="Nome ou e-mail" @bind="searchTerm" @bind:event="oninput" />
-				</div>
+		<div class="card-header d-flex justify-content-between align-items-center">
+			<div class="card-title m-0">Permissões dos Usuários</div>
+			<div class="d-flex gap-2">
 				<button class="btn btn-outline-secondary" @onclick="Reload">Recarregar</button>
 			</div>
+		</div>
+		<div class="card-body">
+	
 			<div class="table-responsive">
 				<table class="table">
 					<thead>
 						<tr>
 							<th>Nome</th>
 							<th>E-mail</th>
-							<th>Status</th>
+							<th>Função</th>
 							<th class="text-end">Ações</th>
 						</tr>
 					</thead>
@@ -38,10 +35,10 @@
 								<td>@u.Name</td>
 								<td>@u.Email</td>
 								<td>
-									<span class="badge bg-info">@u.Role</span>
+									<span class="badge bg-success">@u.Role</span>
 								</td>
 								<td class="text-end">
-									<button class="btn btn-sm btn-primary" @onclick="() => Edit(u.Id)">Editar</button>
+									<button class="btn btn-sm btn-outline-primary" @onclick="() => Edit(u.Id)">Editar</button>
 								</td>
 							</tr>
 						}
