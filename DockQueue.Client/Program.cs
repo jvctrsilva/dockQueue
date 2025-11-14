@@ -45,6 +45,12 @@ builder.Services.AddServerSideBlazor()
 
 });
 
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = true;
+    });
+
 builder.Services.AddSweetAlert2();
 builder.Services.AddWMBOS();
 builder.Services.AddWMBSC();
