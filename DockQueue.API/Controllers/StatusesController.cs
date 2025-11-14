@@ -13,14 +13,11 @@ namespace DockQueue.Api.Controllers
         private readonly IStatusService _service;
         public StatusesController(IStatusService service) { _service = service; }
 
-        // Operadores podem listar; criação/edição somente admin (ajuste conforme sua Role)
         [HttpGet]
-        [Authorize] // qualquer autenticado
         public async Task<IActionResult> GetAll()
             => Ok(await _service.GetAllAsync());
 
         [HttpGet("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> Get(int id)
             => Ok(await _service.GetByIdAsync(id));
 

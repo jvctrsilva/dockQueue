@@ -8,7 +8,7 @@ namespace DockQueue.Api.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = "Screen:QueueView")]
     public class QueueController : ControllerBase
     {
         private readonly IQueueService _service;
@@ -18,7 +18,6 @@ namespace DockQueue.Api.Controllers
             _service = service;
         }
 
-        // POST api/queue  (motorista entra na fila)
         [HttpPost]
         [AllowAnonymous]
         public async Task<ActionResult<QueueEntryViewDto>> Enqueue([FromBody] CreateQueueEntryDto dto)
@@ -41,9 +40,7 @@ namespace DockQueue.Api.Controllers
             }
         }
 
-
         [HttpGet]
-        [Authorize(Policy = "Screen:QueueView")]
         public async Task<ActionResult<IReadOnlyList<QueueEntryViewDto>>> GetQueue([FromQuery] QueueType type)
         {
             var result = await _service.GetQueueAsync(type);
@@ -59,9 +56,7 @@ namespace DockQueue.Api.Controllers
             return Ok(result);
         }
 
-        // PUT api/queue/assign-box (OPERADOR)
         [HttpPut("assign-box")]
-        [Authorize(Policy = "Screen:QueueView")]
         public async Task<ActionResult<QueueEntryViewDto>> AssignBox([FromBody] AssignBoxDto dto)
         {
             var userId = GetUserIdFromToken();
@@ -69,9 +64,7 @@ namespace DockQueue.Api.Controllers
             return Ok(result);
         }
 
-        // POST api/queue/start-box-operation
         [HttpPost("start-box-operation")]
-        [Authorize(Policy = "Screen:QueueView")]
         public async Task<ActionResult<QueueEntryViewDto>> StartBoxOperation([FromBody] StartBoxOperationDto dto)
         {
             try
@@ -90,9 +83,7 @@ namespace DockQueue.Api.Controllers
             }
         }
 
-        // POST api/queue/finish-box-operation
         [HttpPost("finish-box-operation")]
-        [Authorize(Policy = "Screen:QueueView")]
         public async Task<ActionResult<QueueEntryViewDto>> FinishBoxOperation([FromBody] FinishBoxOperationDto dto)
         {
             try
@@ -112,7 +103,6 @@ namespace DockQueue.Api.Controllers
         }
 
         [HttpDelete]
-        [Authorize(Policy = "Screen:QueueView")]
         private int? GetUserIdFromToken()
         {
             var claim = User.Claims.FirstOrDefault(c => c.Type == "sub" || c.Type == "id");
@@ -123,8 +113,6 @@ namespace DockQueue.Api.Controllers
 
             return null;
         }
-
-
 
         [HttpPost("lookup")]
         [AllowAnonymous]
@@ -137,9 +125,6 @@ namespace DockQueue.Api.Controllers
             return Ok(result);
         }
 
-
-        // DELETE api/queue?type=Unloading
-        [Authorize(Policy = "Screen:QueueView")]
         [HttpDelete]
         public async Task<IActionResult> Clear([FromQuery] QueueType type)
         {
