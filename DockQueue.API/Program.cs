@@ -81,12 +81,24 @@ builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>
 
 builder.Services.AddAuthorization(options =>
 {
-    foreach (Screen s in Enum.GetValues(typeof(Screen)))
-    {
-        if (s == Screen.None) continue;
-        options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
-    }
+    //foreach (Screen s in Enum.GetValues(typeof(Screen)))
+    //{
+    //    if (s == Screen.None) continue;
+    //    options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
+    //}
+    options.AddScreenPolicies();
+
+
 });
+
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001";
+
+builder.Services.AddHttpClient("ApiClient", client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 
 
 // -----------------------

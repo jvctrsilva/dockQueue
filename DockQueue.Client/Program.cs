@@ -28,12 +28,11 @@ builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
 builder.Services.AddAuthenticationCore();
 builder.Services.AddAuthorizationCore(options =>
 {
-    foreach (Screen s in Enum.GetValues(typeof(Screen)))
-    {
-        if (s == Screen.None) continue;
-        options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
-    }
+    options.AddScreenPolicies();
 });
+
+builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorPages();
 
