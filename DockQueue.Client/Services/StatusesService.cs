@@ -58,7 +58,7 @@ namespace DockQueue.Client.Services
             var response = await SendAsync(c => c.GetAsync("api/statuses"));
             response.EnsureSuccessStatusCode();
 
-            var status = await response.Content.ReadFromJsonAsync<List<StatusDto>>()
+            var status = await response.Content.ReadFromJsonAsync<List<StatusDto>>();
             return status ?? new List<StatusDto>();             
         }
 
@@ -67,7 +67,7 @@ namespace DockQueue.Client.Services
             AttachAuthHeader();
 
             var response = await SendAsync(c => c.GetAsync($"api/statuses/{id}"));
-            Console.WriteLine($"[StatusesService] Status GET /api/statuses/{id} = {(int)resp.StatusCode}");
+            Console.WriteLine($"[StatusesService] Status GET /api/statuses/{id} = {(int)response.StatusCode}");
 
             if (!response.IsSuccessStatusCode)
                 return null;
