@@ -50,7 +50,7 @@ public class BoxService
     public async Task<BoxDto?> GetByIdAsync(int id)
     {
         AttachAuthHeader();
-        var response = await SendAsync(c => c.GetAsync("/api/box"));
+        var response = await SendAsync(c => c.GetAsync($"/api/box/{id}"));
         if (!response.IsSuccessStatusCode)
             return null;
 

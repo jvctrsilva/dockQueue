@@ -22,7 +22,6 @@ public class BoxListViewModel
         try
         {
             IsLoading = true;
-            Error = null;
             Items = await _service.GetAllAsync();
         }
         catch (Exception ex)

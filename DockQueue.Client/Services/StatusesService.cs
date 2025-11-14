@@ -1,4 +1,5 @@
-﻿using DockQueue.Application.DTOs;
+﻿using Azure;
+using DockQueue.Application.DTOs;
 using DockQueue.Client.ViewModels;
 using System.Net;
 using System.Net.Http.Headers;
@@ -54,38 +55,27 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var resp = await SendAsync(c => c.GetAsync("api/statuses"));
-            Console.WriteLine($"[StatusesService] Status /api/statuses = {(int)resp.StatusCode}");
+            var response = await SendAsync(c => c.GetAsync("api/statuses"));
+            response.EnsureSuccessStatusCode();
 
-            if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-            {
-                // aqui NÃO vamos deslogar o usuário
-                // deixamos pra tela decidir o que fazer (exibir msg "sem permissão", etc.)
-                throw new UnauthorizedAccessException("Sem permissão para consultar status.");
-            }
-
-            resp.EnsureSuccessStatusCode();
-
-            return await resp.Content.ReadFromJsonAsync<List<StatusDto>>()
-                   ?? new();
+            var status = await response.Content.ReadFromJsonAsync<List<StatusDto>>()
+            return status ?? new List<StatusDto>();             
         }
 
         public async Task<StatusDto?> GetByIdAsync(int id)
         {
             AttachAuthHeader();
 
-            var resp = await SendAsync(c => c.GetAsync($"api/statuses/{id}"));
+            var response = await SendAsync(c => c.GetAsync($"api/statuses/{id}"));
             Console.WriteLine($"[StatusesService] Status GET /api/statuses/{id} = {(int)resp.StatusCode}");
 
-            if (resp.StatusCode == HttpStatusCode.NotFound)
+            if (!response.IsSuccessStatusCode)
                 return null;
 
-            if (resp.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 throw new UnauthorizedAccessException("Sem permissão para consultar status.");
 
-            resp.EnsureSuccessStatusCode();
-
-            return await resp.Content.ReadFromJsonAsync<StatusDto>();
+            return await response.Content.ReadFromJsonAsync<StatusDto>();
         }
 
         public async Task<StatusDto> CreateAsync(CreateStatusDto dto)
