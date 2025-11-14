@@ -83,7 +83,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
 
-    public async Task<AuthResponseDto?> GetStoredAuthDataAsync()
+    private async Task<AuthResponseDto?> GetStoredAuthDataAsync()
     {
         try
         {
