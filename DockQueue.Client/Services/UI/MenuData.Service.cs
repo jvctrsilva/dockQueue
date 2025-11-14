@@ -27,7 +27,6 @@ public class MenuDataService
             selected: false,
             active: false,
             dirChange: false,
-            roles: null,               // sem filtro por role
             screenRequired: Screen.QueueView // exige a flag StatusView
         ),
         new MainMenuItems(
@@ -39,7 +38,6 @@ public class MenuDataService
             selected: false,
             active: false,
             dirChange: false,
-            roles: null,               // sem filtro por role
             screenRequired: Screen.StatusView // exige a flag StatusView
         ),
         new MainMenuItems(
@@ -50,8 +48,7 @@ public class MenuDataService
             badgeClass: "bg-success-transparent",
             selected: false,
             active: false,
-            dirChange: false,
-            roles: null,          
+            dirChange: false, 
             screenRequired: Screen.BoxesView
         ),
         new MainMenuItems(

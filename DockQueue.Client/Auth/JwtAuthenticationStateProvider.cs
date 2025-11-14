@@ -1,4 +1,5 @@
 ﻿using System.Security.Claims;
+using System.Security.Cryptography;
 using DockQueue.Application.DTOs;
 using DockQueue.Client.ViewModels;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -32,7 +33,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
             if (authData is null || string.IsNullOrWhiteSpace(authData.Token))
             {
                 Console.WriteLine("[AuthProvider] Sem AuthData ou token vazio -> Anon");
-
+                await _localStorage.DeleteAsync("AuthData");
                 _auth.ClearAuthData();
                 return Anon();
             }
@@ -84,9 +85,21 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 
     public async Task<AuthResponseDto?> GetStoredAuthDataAsync()
     {
-        Console.WriteLine("[AuthProvider] Limpando AuthData da memória");
-        var stored = await _localStorage.GetAsync<AuthResponseDto>("AuthData");
-        return stored.Success ? stored.Value : null;
+        try
+        {
+            var result = await _localStorage.GetAsync<AuthResponseDto>("AuthData");
+
+            if (result.Success && result.Value is not null)
+                return result.Value;
+
+            return null;
+        }
+        catch (CryptographicException)
+        {
+            // Dados não conseguem ser descriptografados -> limpa e trata como deslogado
+            await _localStorage.DeleteAsync("AuthData");
+            return null;
+        }
     }
 
     // Chamar apenas de lugares onde JS está disponível (componentes, AuthService/logout, etc.)
