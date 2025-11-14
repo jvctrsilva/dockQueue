@@ -13,7 +13,7 @@ namespace DockQueue.API.Controllers
         public RefreshController(IUserService userService) => _userService = userService;
 
         [HttpPost]
-        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenResponseDto request)
         {
             var rotated = await _userService.RotateRefreshTokenAsync(request.RefreshToken, request.AccessToken);
             if (rotated is null) return Unauthorized("Refresh inválido ou expirado");

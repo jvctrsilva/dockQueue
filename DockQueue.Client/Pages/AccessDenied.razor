@@ -1,0 +1,26 @@
+﻿@page "/acesso-negado"
+@inject NavigationManager Navigation
+
+<PageTitle>Acesso negado</PageTitle>
+
+<div class="container mt-4">
+    <div class="alert alert-warning" role="alert">
+        <h4 class="alert-heading">Acesso negado</h4>
+        <p>Você está autenticado, mas não tem permissão para acessar esta funcionalidade.</p>
+        <hr />
+        <p class="mb-0">
+            Se você acredita que isso é um engano, fale com o administrador do sistema.
+        </p>
+    </div>
+
+    <button class="btn btn-primary" @onclick="VoltarHome">
+        Voltar para a Home
+    </button>
+</div>
+
+@code {
+    private void VoltarHome()
+    {
+        Navigation.NavigateTo("/home"); // ou "/" se a home for a raiz
+    }
+}

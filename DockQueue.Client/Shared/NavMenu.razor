@@ -23,8 +23,7 @@
     <!-- End::main-sidebar-header -->
 
     <!-- Start::main-sidebar -->
-    <div class="main-sidebar" id="sidebar-scroll">
-        <BlazorOverlayScrollbars Configurations="configurations">
+    <BlazorOverlayScrollbars Configurations="configurations">
             <BlazorOverlayScrollbarsContent>
                 <!-- Start::nav -->
                 <nav class="main-menu-container nav nav-pills flex-column sub-open">
@@ -70,8 +69,7 @@
                 </nav>
                 <!-- End::nav -->
             </BlazorOverlayScrollbarsContent>
-        </BlazorOverlayScrollbars>
-    </div>
+     </BlazorOverlayScrollbars>
     <!-- End::main-sidebar -->
 
 </aside>
@@ -583,11 +581,22 @@
         catch { throw; }
     }
 
-    private async void icontextOpenFn()
+    private async Task icontextOpenFn()
     {
-        var dataToggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
-        if (dataToggled == "icon-text-close")
-            await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-icon-text", "open");
+        try
+        {
+            var dataToggled = await JSRuntime.InvokeAsync<string>("interop.getAttributeToHtml", "data-toggled");
+            if (dataToggled == "icon-text-close")
+                await JSRuntime.InvokeAsync<string>("interop.addAttributeToHtml", "data-icon-text", "open");
+        }
+        catch (TaskCanceledException)
+        {
+            // navegação/desconexão interrompeu a chamada, ignorar
+        }
+        catch (JSException ex)
+        {
+            Console.WriteLine($"[NavMenu] JS error em icontextOpenFn: {ex.Message}");
+        }
     }
 
     private async Task responsivecloseFn()

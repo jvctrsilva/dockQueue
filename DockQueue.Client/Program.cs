@@ -19,10 +19,11 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<ProtectedLocalStorage>();
-
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<JwtAuthenticationStateProvider>());
+
+//builder.Services.AddTransient<AuthMessageHandler>();
 
 builder.Services.AddAuthenticationCore();
 builder.Services.AddAuthorizationCore(options =>
@@ -51,7 +52,7 @@ builder.Services.AddWMBSC();
 builder.Services.AddApplicationServices();
 builder.Services.AddSessionAndCaching();
 
-var apiBaseUrl = "https://localhost:5001";
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001";
 
 
 builder.Services.AddHttpClient("ApiClient", client =>
