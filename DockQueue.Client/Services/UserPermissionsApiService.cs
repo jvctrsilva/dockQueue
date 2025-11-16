@@ -59,13 +59,13 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
             return _httpClient.GetFromJsonAsync<PermissionsScreenDataDto>(
-                $"api/operators/{userId}/permissions/screen-data", ct);
+                $"/api/operators/{userId}/permissions/screen-data", ct);
         }
 
         public async Task<bool> UpdateAsync(int userId, UpdateOperatorPermissionsDto dto, CancellationToken ct = default)
         {
             AttachAuthHeader();
-            var resp =await SendAsync(c => c.PutAsJsonAsync($"api/operators/{userId}/permissions", dto, ct));
+            var resp =await SendAsync(c => c.PutAsJsonAsync($"/api/operators/{userId}/permissions", dto, ct));
             return resp.IsSuccessStatusCode;
         }
     }

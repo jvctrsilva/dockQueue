@@ -55,7 +55,7 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var response = await SendAsync(c => c.GetAsync("api/statuses"));
+            var response = await SendAsync(c => c.GetAsync("/api/statuses"));
             response.EnsureSuccessStatusCode();
 
             var status = await response.Content.ReadFromJsonAsync<List<StatusDto>>();
@@ -66,7 +66,7 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var response = await SendAsync(c => c.GetAsync($"api/statuses/{id}"));
+            var response = await SendAsync(c => c.GetAsync($"/api/statuses/{id}"));
             Console.WriteLine($"[StatusesService] Status GET /api/statuses/{id} = {(int)response.StatusCode}");
 
             if (!response.IsSuccessStatusCode)
@@ -82,7 +82,7 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var resp = await SendAsync(c => c.PostAsJsonAsync("api/statuses", dto));
+            var resp = await SendAsync(c => c.PostAsJsonAsync("/api/statuses", dto));
             var body = await resp.Content.ReadAsStringAsync();
             Console.WriteLine($"[StatusesService] Status POST /api/statuses = {(int)resp.StatusCode}");
 
@@ -99,7 +99,7 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var resp = await SendAsync(c => c.PutAsJsonAsync($"api/statuses/{id}", dto));
+            var resp = await SendAsync(c => c.PutAsJsonAsync($"/api/statuses/{id}", dto));
             var body = await resp.Content.ReadAsStringAsync();
             Console.WriteLine($"[StatusesService] Status PUT /api/statuses/{id} = {(int)resp.StatusCode}");
 
@@ -116,7 +116,7 @@ namespace DockQueue.Client.Services
         {
             AttachAuthHeader();
 
-            var resp = await SendAsync(c => c.DeleteAsync($"api/statuses/{id}"));
+            var resp = await SendAsync(c => c.DeleteAsync($"/api/statuses/{id}"));
             var body = await resp.Content.ReadAsStringAsync();
             Console.WriteLine($"[StatusesService] Status DELETE /api/statuses/{id} = {(int)resp.StatusCode}");
 

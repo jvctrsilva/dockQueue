@@ -62,7 +62,7 @@ namespace DockQueue.Client.Services
         public async Task<SettingsDto?> GetAsync()
         {
             AttachAuthHeader();
-            var resp = await SendAsync(c => c.GetAsync("api/settings/operating-schedule"));
+            var resp = await SendAsync(c => c.GetAsync("/api/settings/operating-schedule"));
             if (resp.StatusCode == HttpStatusCode.NotFound) return null;
 
             resp.EnsureSuccessStatusCode();
@@ -92,7 +92,7 @@ namespace DockQueue.Client.Services
                 dto.TimeZone
             };
 
-            var resp = await SendAsync(c => c.PutAsJsonAsync("api/settings/operating-schedule", payload));
+            var resp = await SendAsync(c => c.PutAsJsonAsync("/api/settings/operating-schedule", payload));
             resp.EnsureSuccessStatusCode();
 
             var w = await resp.Content.ReadFromJsonAsync<WireDto>();
