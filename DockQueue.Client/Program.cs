@@ -19,20 +19,20 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<ProtectedLocalStorage>();
-
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp =>
     sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
+//builder.Services.AddTransient<AuthMessageHandler>();
+
 builder.Services.AddAuthenticationCore();
 builder.Services.AddAuthorizationCore(options =>
 {
-    foreach (Screen s in Enum.GetValues(typeof(Screen)))
-    {
-        if (s == Screen.None) continue;
-        options.AddPolicy($"Screen:{s}", p => p.Requirements.Add(new ScreenRequirement(s)));
-    }
+    options.AddScreenPolicies();
 });
+
+builder.Services.AddSingleton<IAuthorizationHandler, ScreenAuthorizationHandler>();
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddRazorPages();
 
@@ -44,6 +44,12 @@ builder.Services.AddServerSideBlazor()
 
 });
 
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = true;
+    });
+
 builder.Services.AddSweetAlert2();
 builder.Services.AddWMBOS();
 builder.Services.AddWMBSC();
@@ -51,7 +57,7 @@ builder.Services.AddWMBSC();
 builder.Services.AddApplicationServices();
 builder.Services.AddSessionAndCaching();
 
-var apiBaseUrl = "https://localhost:5001";
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5001";
 
 
 builder.Services.AddHttpClient("ApiClient", client =>

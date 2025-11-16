@@ -8,31 +8,48 @@ public class UserService
 {
     private readonly HttpClient _httpClient;
     private readonly AuthViewModel _auth;
+    private readonly JwtAuthenticationStateProvider _authProvider;
 
-    public UserService(IHttpClientFactory httpClientFactory, AuthViewModel auth)
+    public UserService(IHttpClientFactory httpClientFactory, AuthViewModel auth,
+            JwtAuthenticationStateProvider authProvider)
     {
         _httpClient = httpClientFactory.CreateClient("ApiClient");
         _auth = auth;
+        _authProvider = authProvider;
     }
 
     private void AttachAuthHeader()
     {
         var token = _auth.AccessToken;
+        Console.WriteLine($"[StatusesService] AttachAuthHeader - token length = {token?.Length ?? 0}");
+
         if (!string.IsNullOrWhiteSpace(token))
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
         else
             _httpClient.DefaultRequestHeaders.Authorization = null;
     }
-    public async Task<List<UserDto>> GetAllAsync()
+    private async Task<HttpResponseMessage> SendAsync(
+                    Func<HttpClient, Task<HttpResponseMessage>> httpCall)
     {
         AttachAuthHeader();
+        var response = await httpCall(_httpClient);
 
-        var response = await _httpClient.GetAsync("/api/users");
-
-        // se nÃ£o autorizado, deixa o chamador decidir o que fazer (ex.: redirecionar pro login)
+        Console.WriteLine($"[BoxService] Status = {(int)response.StatusCode}");
         if (response.StatusCode == HttpStatusCode.Unauthorized)
-            throw new UnauthorizedAccessException("API retornou 401 para /api/users.");
+        {
+            Console.WriteLine("[BoxService] 401 -> limpando auth");
+            // sessão morreu: limpa auth + deixa o Blazor tratar como não autenticado
+            await _authProvider.ClearAuthDataAsync();
+            throw new UnauthorizedAccessException("Sessão expirada ou inválida.");
+        }
+
+        return response;
+    }
+
+    public async Task<List<UserDto>> GetAllAsync()
+    {
+        var response = await SendAsync(c => c.GetAsync("/api/users"));
 
         response.EnsureSuccessStatusCode();
 
@@ -42,18 +59,17 @@ public class UserService
 
     public async Task<UserDto?> GetByIdAsync(int id)
     {
-        AttachAuthHeader();
-        var response = await _httpClient.GetAsync($"/api/users/{id}");
+        var response = await SendAsync(c => c.GetAsync($"/api/users/{id}"));
         if (response.StatusCode == HttpStatusCode.NotFound)
             return null;
+
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<UserDto>();
     }
 
     public async Task<UserDto?> CreateAsync(CreateUserDto dto)
     {
-        AttachAuthHeader();
-        var response = await _httpClient.PostAsJsonAsync("/api/users", dto);
+        var response = await SendAsync(c => c.PostAsJsonAsync("/api/users", dto));
         if (!response.IsSuccessStatusCode)
             return null;
 
@@ -62,21 +78,19 @@ public class UserService
 
     public async Task<bool> UpdateAsync(int id, UpdateUserDto dto)
     {
-        AttachAuthHeader();
-        var response = await _httpClient.PutAsJsonAsync($"/api/users/{id}", dto);
+        var response = await SendAsync(c => c.PutAsJsonAsync($"/api/users/{id}", dto));
         return response.IsSuccessStatusCode;
     }
+
     public async Task<bool> DeleteAsync(int id)
     {
-        AttachAuthHeader();
-        var response = await _httpClient.DeleteAsync($"/api/users/{id}");
+        var response = await SendAsync(c => c.DeleteAsync($"/api/users/{id}"));
         return response.IsSuccessStatusCode;
     }
 
     public async Task<bool> UpdatePasswordAsync(int id, UpdatePasswordDto dto)
     {
-        AttachAuthHeader();
-        var response = await _httpClient.PutAsJsonAsync($"/api/users/{id}/password", dto);
+        var response = await SendAsync(c => c.PutAsJsonAsync($"/api/users/{id}/password", dto));
         return response.IsSuccessStatusCode;
     }
 }

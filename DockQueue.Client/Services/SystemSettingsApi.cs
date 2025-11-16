@@ -1,6 +1,8 @@
 ﻿using DockQueue.Client.Shared;
-using DockQueue.Client.ViewModels;
+using DockQueue.Client.ViewModels; // (pode não precisar mais, depende de SettingsDto)
+using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace DockQueue.Client.Services
 {
@@ -8,36 +10,61 @@ namespace DockQueue.Client.Services
     {
         private readonly HttpClient _httpClient;
         private readonly AuthViewModel _auth;
-        public SystemSettingsApi(IHttpClientFactory httpClientFactory, AuthViewModel auth)
+        private readonly JwtAuthenticationStateProvider _authProvider;
+
+        public SystemSettingsApi(IHttpClientFactory httpClientFactory,
+            AuthViewModel auth, 
+            JwtAuthenticationStateProvider authProvider)
         {
             _httpClient = httpClientFactory.CreateClient("ApiClient");
             _auth = auth;
+            _authProvider = authProvider;
         }
 
+        private sealed class WireDto
+        {
+            public OperatingDays OperatingDays { get; set; }
+            public string? StartTime { get; set; }
+            public string? EndTime { get; set; }
+            public string? TimeZone { get; set; }
+            public DateTime CreatedAt { get; set; }
+            public DateTime UpdatedAt { get; set; }
+        }
         private void AttachAuthHeader()
         {
             var token = _auth.AccessToken;
+            Console.WriteLine($"[StatusesService] AttachAuthHeader - token length = {token?.Length ?? 0}");
+
             if (!string.IsNullOrWhiteSpace(token))
                 _httpClient.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", token);
             else
                 _httpClient.DefaultRequestHeaders.Authorization = null;
         }
-        private sealed class WireDto
+        private async Task<HttpResponseMessage> SendAsync(
+                        Func<HttpClient, Task<HttpResponseMessage>> httpCall)
         {
-            public OperatingDays OperatingDays { get; set; }
-            public string? StartTime { get; set; }  // "HH:mm" ou null
-            public string? EndTime { get; set; }  // "HH:mm" ou null
-            public string? TimeZone { get; set; }
-            public DateTime CreatedAt { get; set; }
-            public DateTime UpdatedAt { get; set; }
+            AttachAuthHeader();
+            var response = await httpCall(_httpClient);
+
+            Console.WriteLine($"[BoxService] Status = {(int)response.StatusCode}");
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                Console.WriteLine("[BoxService] 401 -> limpando auth");
+                // sessão morreu: limpa auth + deixa o Blazor tratar como não autenticado
+                await _authProvider.ClearAuthDataAsync();
+                throw new UnauthorizedAccessException("Sessão expirada ou inválida.");
+            }
+
+            return response;
         }
 
         public async Task<SettingsDto?> GetAsync()
         {
             AttachAuthHeader();
-            var resp = await _httpClient.GetAsync("api/settings/operating-schedule");
-            if (resp.StatusCode == System.Net.HttpStatusCode.NotFound) return null;
+            var resp = await SendAsync(c => c.GetAsync("/api/settings/operating-schedule"));
+            if (resp.StatusCode == HttpStatusCode.NotFound) return null;
+
             resp.EnsureSuccessStatusCode();
 
             var w = await resp.Content.ReadFromJsonAsync<WireDto>();
@@ -65,7 +92,7 @@ namespace DockQueue.Client.Services
                 dto.TimeZone
             };
 
-            var resp = await _httpClient.PutAsJsonAsync("api/settings/operating-schedule", payload);
+            var resp = await SendAsync(c => c.PutAsJsonAsync("/api/settings/operating-schedule", payload));
             resp.EnsureSuccessStatusCode();
 
             var w = await resp.Content.ReadFromJsonAsync<WireDto>();
@@ -81,23 +108,18 @@ namespace DockQueue.Client.Services
             };
         }
 
-
-        /// Verifica se o horário atual está dentro do horário de funcionamento
-        /// configurado no banco (dias + faixa de horário).
         public async Task<bool> IsOpenNowAsync(DateTime? now = null)
         {
             AttachAuthHeader();
             var settings = await GetAsync();
             if (settings is null)
             {
-                // Se não houver configuração, você decide:
-                // true = não bloquear, false = sempre bloquear
+                // tua regra: se não houver config, true ou false?
                 return true;
             }
 
             var referenceTime = now ?? DateTime.Now;
 
-            // 1) Verifica se hoje é um dia operacional
             var today = referenceTime.DayOfWeek;
             var todayFlag = today switch
             {
@@ -115,27 +137,20 @@ namespace DockQueue.Client.Services
             if (!openToday)
                 return false;
 
-            // 2) Verifica faixa de horário (StartTime / EndTime no formato "HH:mm")
             if (string.IsNullOrWhiteSpace(settings.StartTime) ||
                 string.IsNullOrWhiteSpace(settings.EndTime))
             {
-                // Se não tiver horário definido, você pode decidir:
-                // true = considera aberto o dia todo, false = considera fechado
                 return false;
             }
 
             if (!TimeSpan.TryParse(settings.StartTime, out var start) ||
                 !TimeSpan.TryParse(settings.EndTime, out var end))
             {
-                // Se as configs estiverem zoadas, por segurança bloqueia
                 return false;
             }
 
             var time = referenceTime.TimeOfDay;
-
-            // Simples: não estamos tratando janela que passa da meia-noite.
             return time >= start && time <= end;
         }
-
     }
 }

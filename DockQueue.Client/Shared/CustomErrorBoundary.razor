@@ -8,6 +8,7 @@
         <h2 class="title">Algo deu errado ao processar sua solicitação no servidor!</h2> 
         <h6 class="sub_title">Caso esse erro persista, entre em contato com o suporte.</h6>
         <a class="btn btn-outline-danger" @onclick="Voltar">Voltar ao início</a>
+        <span>@Error?.ToString()</span>
     </div> 
 </div>
 <!-- End::error-page -->

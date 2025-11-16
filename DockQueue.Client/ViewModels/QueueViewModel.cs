@@ -39,6 +39,7 @@ namespace DockQueue.Client.ViewModels
                 // Carrega status e boxes uma vez
                 Boxes = await _boxService.GetAllAsync();
                 Statuses = await _statusService.GetAllAsync();
+                Entries = await _queueService.GetQueueAsync(ActiveType);
 
                 await LoadQueueAsync();
             }

@@ -13,19 +13,15 @@ namespace DockQueue.Api.Controllers
         private readonly IStatusService _service;
         public StatusesController(IStatusService service) { _service = service; }
 
-        // Operadores podem listar; criação/edição somente admin (ajuste conforme sua Role)
         [HttpGet]
-        [Authorize] // qualquer autenticado
         public async Task<IActionResult> GetAll()
             => Ok(await _service.GetAllAsync());
 
         [HttpGet("{id:int}")]
-        [Authorize]
         public async Task<IActionResult> Get(int id)
             => Ok(await _service.GetByIdAsync(id));
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Post([FromBody] CreateStatusDto dto)
         {
             var created = await _service.CreateAsync(dto);
@@ -33,12 +29,10 @@ namespace DockQueue.Api.Controllers
         }
 
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Put(int id, [FromBody] UpdateStatusDto dto)
             => Ok(await _service.UpdateAsync(id, dto));
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
             await _service.DeleteAsync(id);
